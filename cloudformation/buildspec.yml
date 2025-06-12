@@ -1,0 +1,83 @@
+version: 0.2
+
+env:
+  variables:
+    STACK_NAME: "microservices-infrastructure"
+    TEMPLATE_FILE: "cloudformation/infrastructure.yaml"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      # Install cfn-lint and taskcat for CloudFormation template validation
+      - pip install cfn-lint taskcat boto3
+      - echo "Installing AWS CLI..."
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - ./aws/install
+
+  pre_build:
+    commands:
+      - echo "Validating CloudFormation templates..."
+      - cfn-lint -t $TEMPLATE_FILE
+      - echo "Creating test configuration for TaskCat..."
+      - mkdir -p ~/.taskcat
+      - |
+        cat > ~/.taskcat/config.yml << EOF
+        project:
+          name: aws-infra-microservices
+          regions:
+            - us-east-1
+        tests:
+          default:
+            template: ./cloudformation/infrastructure.yaml
+            parameters:
+              ProjectName: microservices-test
+              Environment: dev
+        EOF
+      - echo "Running TaskCat to test CloudFormation templates..."
+      - taskcat test run --no-delete
+
+  build:
+    commands:
+      - echo "Build started on `date`"
+      - echo "Packaging CloudFormation template..."
+      - |
+        aws cloudformation package \
+          --template-file $TEMPLATE_FILE \
+          --s3-bucket $ARTIFACTS_BUCKET \
+          --output-template-file packaged-template.yaml
+      - echo "Template packaged successfully"
+
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - echo "Deploying CloudFormation stack..."
+      - |
+        aws cloudformation deploy \
+          --template-file packaged-template.yaml \
+          --stack-name $STACK_NAME \
+          --parameter-overrides \
+            ProjectName=microservices \
+            Environment=$ENVIRONMENT \
+          --capabilities CAPABILITY_IAM \
+          --no-fail-on-empty-changeset
+      - echo "Stack deployment completed"
+      - |
+        # Get stack outputs
+        aws cloudformation describe-stacks \
+          --stack-name $STACK_NAME \
+          --query 'Stacks[0].Outputs' \
+          --output table
+
+artifacts:
+  files:
+    - packaged-template.yaml
+    - cloudformation/infrastructure.yaml
+    - taskcat_outputs/**/*
+  discard-paths: no
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

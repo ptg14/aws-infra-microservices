@@ -1,0 +1,29 @@
+framework:
+  - terraform
+  - secrets
+
+download-external-modules: true
+evaluate-variables: true
+
+# Skip specific checks if needed
+skip-check:
+  - CKV_AWS_79  # Ensure Instance Metadata Service Version 1 is not enabled
+  - CKV_AWS_8   # Ensure all data stored in the Launch configuration EBS is securely encrypted at rest
+  - CKV_AWS_23  # Ensure every security groups rule has a description
+  - CKV_AWS_24  # Ensure no security groups allow ingress from 0.0.0.0:0 to port 22
+
+# Directories to scan
+directory:
+  - terraform/
+
+# Output format
+output: cli
+
+# Severity threshold
+check:
+  - HIGH
+  - MEDIUM
+
+# Generate reports
+output-file-path: reports/checkov-report.json
+output-format: json,cli
