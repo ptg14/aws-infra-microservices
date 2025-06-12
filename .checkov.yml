@@ -5,12 +5,10 @@ framework:
 download-external-modules: true
 evaluate-variables: true
 
-# Skip specific checks if needed
+# Skip specific checks if needed (reduced list)
 skip-check:
-  - CKV_AWS_79  # Ensure Instance Metadata Service Version 1 is not enabled
-  - CKV_AWS_8   # Ensure all data stored in the Launch configuration EBS is securely encrypted at rest
-  - CKV_AWS_23  # Ensure every security groups rule has a description
-  - CKV_AWS_24  # Ensure no security groups allow ingress from 0.0.0.0:0 to port 22
+  # Skip checks that might be acceptable for development environment
+  - CKV_AWS_23  # Security group descriptions (already implemented)
 
 # Directories to scan
 directory:
@@ -19,11 +17,15 @@ directory:
 # Output format
 output: cli
 
-# Severity threshold
+# Severity threshold - include all levels for comprehensive scanning
 check:
   - HIGH
   - MEDIUM
+  - LOW
 
 # Generate reports
 output-file-path: reports/checkov-report.json
 output-format: json,cli
+
+# Enable additional checks
+enable-secrets-scan-all-files: true
