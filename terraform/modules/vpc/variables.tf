@@ -27,16 +27,3 @@ variable "environment" {
   description = "Environment name"
   type        = string
 }
-
-# Thêm variables cho flow logs
-variable "flow_log_role_arn" {
-  description = "IAM role ARN for VPC Flow Logs"
-  type        = string
-  default     = ""
-}
-
-variable "flow_log_destination" {
-  description = "Destination for VPC Flow Logs"
-  type        = string
-  default     = ""
-}
