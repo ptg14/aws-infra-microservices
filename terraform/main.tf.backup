@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "terraform-state-1749804075-cloudshell-user"
+    bucket         = "your-terraform-state-bucket-name"
     key            = "microservices/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-lock"
@@ -49,13 +49,13 @@ module "vpc" {
 module "ec2" {
   source = "./modules/ec2"
 
-  vpc_id             = module.vpc.vpc_id
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  private_subnet_ids = module.vpc.private_subnet_ids
-  instance_type      = var.instance_type
-  ec2_instance_count = var.ec2_instance_count
-  ami_id             = var.ami_id
-  key_name           = var.key_name
-  project            = var.project
-  environment        = var.environment
+  vpc_id                = module.vpc.vpc_id
+  public_subnet_ids     = module.vpc.public_subnet_ids
+  private_subnet_ids    = module.vpc.private_subnet_ids
+  instance_type         = var.instance_type
+  ec2_instance_count    = var.ec2_instance_count
+  ami_id                = var.ami_id
+  key_name              = var.key_name
+  project               = var.project
+  environment           = var.environment
 }
