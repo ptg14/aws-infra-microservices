@@ -1,6 +1,7 @@
-# Web Security Group
+# Sửa resource aws_security_group "web"
 resource "aws_security_group" "web" {
   name_prefix = "${var.project}-${var.environment}-web-"
+  description = "Security group for web servers" # Thêm description
   vpc_id      = var.vpc_id
 
   # HTTP
@@ -9,7 +10,7 @@ resource "aws_security_group" "web" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] # Có thể giữ nguyên cho web public
   }
 
   # HTTPS
@@ -18,26 +19,43 @@ resource "aws_security_group" "web" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] # Có thể giữ nguyên cho web public
   }
 
-  # SSH (only if key_name is provided)
+  # SSH - Hạn chế IP thay vì 0.0.0.0/0
   dynamic "ingress" {
     for_each = var.key_name != "" ? [1] : []
     content {
-      description = "SSH"
+      description = "SSH from trusted IPs"
       from_port   = 22
       to_port     = 22
       protocol    = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks = ["10.0.0.0/16"] # Chỉ cho phép từ VPC
     }
   }
 
+  # Hạn chế egress thay vì mở toàn bộ
   egress {
-    description = "All outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "HTTP outbound"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "HTTPS outbound"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "DNS outbound"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -52,9 +70,10 @@ resource "aws_security_group" "web" {
   }
 }
 
-# Application Security Group
+# Sửa resource aws_security_group "app"
 resource "aws_security_group" "app" {
   name_prefix = "${var.project}-${var.environment}-app-"
+  description = "Security group for application servers" # Thêm description
   vpc_id      = var.vpc_id
 
   # Application port (8080)
@@ -78,11 +97,28 @@ resource "aws_security_group" "app" {
     }
   }
 
+  # Hạn chế egress
   egress {
-    description = "All outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "HTTP outbound"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "HTTPS outbound"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "DNS outbound"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -97,7 +133,7 @@ resource "aws_security_group" "app" {
   }
 }
 
-# Web Servers (Public Subnets)
+# Sửa resource aws_instance "web"
 resource "aws_instance" "web" {
   count = var.ec2_instance_count
 
@@ -106,6 +142,17 @@ resource "aws_instance" "web" {
   key_name               = var.key_name != "" ? var.key_name : null
   vpc_security_group_ids = [aws_security_group.web.id]
   subnet_id              = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
+
+  # Thêm các cấu hình bảo mật
+  monitoring             = true  # Enable detailed monitoring
+  ebs_optimized         = true  # Enable EBS optimization
+
+  # Cấu hình IMDS v2
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"  # Force IMDSv2
+    http_put_response_hop_limit = 1
+  }
 
   user_data = base64encode(templatefile("${path.module}/user_data_web.sh", {
     instance_name = "${var.project}-${var.environment}-web-${count.index + 1}"
@@ -136,7 +183,7 @@ resource "aws_instance" "web" {
   }
 }
 
-# Application Servers (Private Subnets)
+# Sửa resource aws_instance "app" tương tự
 resource "aws_instance" "app" {
   count = var.ec2_instance_count
 
@@ -145,6 +192,17 @@ resource "aws_instance" "app" {
   key_name               = var.key_name != "" ? var.key_name : null
   vpc_security_group_ids = [aws_security_group.app.id]
   subnet_id              = var.private_subnet_ids[count.index % length(var.private_subnet_ids)]
+
+  # Thêm các cấu hình bảo mật
+  monitoring             = true  # Enable detailed monitoring
+  ebs_optimized         = true  # Enable EBS optimization
+
+  # Cấu hình IMDS v2
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = "required"  # Force IMDSv2
+    http_put_response_hop_limit = 1
+  }
 
   user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
     instance_name = "${var.project}-${var.environment}-app-${count.index + 1}"

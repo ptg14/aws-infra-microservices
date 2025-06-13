@@ -20,7 +20,7 @@ permissions:
 
 env:
   AWS_REGION: 'us-east-1'
-  TERRAFORM_VERSION: '1.12.2'
+  TERRAFORM_VERSION: '1.6.6'
   PROJECT_NAME: 'microservices'
   ENVIRONMENT_NAME: 'production'
 
