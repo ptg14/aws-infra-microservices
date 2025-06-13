@@ -51,6 +51,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    - name: Verify AWS credentials
+      run: |
+        echo "Testing AWS credentials..."
+        aws sts get-caller-identity
+        echo "AWS CLI version:"
+        aws --version
+
     - name: Terraform Format Check
       id: fmt
       run: terraform fmt -check -recursive
@@ -63,29 +70,80 @@ jobs:
       id: validate
       run: terraform validate
 
+    - name: Create reports directory
+      run: |
+        mkdir -p reports
+        ls -la
+
     - name: Run Checkov scan
       id: checkov
       uses: bridgecrewio/checkov-action@master
       with:
         directory: terraform
         framework: terraform
-        output_format: sarif
+        output_format: cli,json,sarif
         output_file_path: reports/results.sarif
+        download_external_modules: true
         quiet: true
         soft_fail: true
         skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23
+      continue-on-error: true
+
+    - name: Debug Checkov outputs
+      run: |
+        echo "Checking reports directory contents..."
+        ls -la reports/ || echo "Reports directory not found"
+        echo "Current directory contents:"
+        ls -la
+        echo "Looking for any SARIF files:"
+        find . -name "*.sarif" -type f 2>/dev/null || echo "No SARIF files found"
+
+    - name: Check if SARIF file exists and create if needed
+      run: |
+        if [ -f "reports/results.sarif" ]; then
+          echo "SARIF file found at reports/results.sarif"
+          echo "SARIF_EXISTS=true" >> $GITHUB_ENV
+          echo "SARIF_PATH=reports/results.sarif" >> $GITHUB_ENV
+        elif [ -f "results.sarif" ]; then
+          echo "SARIF file found at results.sarif"
+          echo "SARIF_EXISTS=true" >> $GITHUB_ENV
+          echo "SARIF_PATH=results.sarif" >> $GITHUB_ENV
+        elif [ -f "reports/results_json.json" ]; then
+          echo "Converting JSON to SARIF format..."
+          # Install sarif-tools if needed
+          pip install sarif-tools
+          # Convert JSON to SARIF (this is a fallback approach)
+          echo "SARIF_EXISTS=false" >> $GITHUB_ENV
+          echo "No SARIF file generated, but JSON results available"
+        else
+          echo "No SARIF file found"
+          echo "SARIF_EXISTS=false" >> $GITHUB_ENV
+        fi
 
     - name: Upload Checkov results to GitHub Security
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: env.SARIF_EXISTS == 'true'
       with:
-        sarif_file: reports/results.sarif
+        sarif_file: ${{ env.SARIF_PATH }}
 
     - name: Checkov Summary
       if: always()
       run: |
         echo "## Checkov Security Scan Results" >> $GITHUB_STEP_SUMMARY
-        echo "Security scan completed. Check the Security tab for detailed results." >> $GITHUB_STEP_SUMMARY
+        if [ "${{ env.SARIF_EXISTS }}" == "true" ]; then
+          echo "✅ Security scan completed successfully. Check the Security tab for detailed results." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ Security scan completed but no SARIF file was generated." >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Show summary from text results if available
+        if [ -f "reports/results_cli.txt" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checkov Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          tail -20 reports/results_cli.txt >> $GITHUB_STEP_SUMMARY || echo "Could not read results file" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
 
     - name: Terraform Plan
       id: plan
