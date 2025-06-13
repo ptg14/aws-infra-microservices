@@ -1,63 +1,36 @@
-infra-microservices\aws-infra-microservices\cloudformation\infrastructure.yaml
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Infrastructure for Microservices - VPC, Subnets, NAT Gateway, EC2, Security Groups'
+Description: 'Microservices Infrastructure - VPC, EC2, Security Groups, NAT Gateway'
 
 Parameters:
   ProjectName:
-    Description: Name of the project for tagging
     Type: String
     Default: microservices
+    Description: Name of the project
 
   Environment:
-    Description: Environment (dev, staging, prod)
     Type: String
     Default: dev
     AllowedValues: [dev, staging, prod]
+    Description: Environment name
 
   VpcCidr:
-    Description: CIDR block for VPC
     Type: String
     Default: 10.0.0.0/16
-
-  PublicSubnet1Cidr:
-    Description: CIDR block for public subnet 1
-    Type: String
-    Default: 10.0.1.0/24
-
-  PublicSubnet2Cidr:
-    Description: CIDR block for public subnet 2
-    Type: String
-    Default: 10.0.2.0/24
-
-  PrivateSubnet1Cidr:
-    Description: CIDR block for private subnet 1
-    Type: String
-    Default: 10.0.10.0/24
-
-  PrivateSubnet2Cidr:
-    Description: CIDR block for private subnet 2
-    Type: String
-    Default: 10.0.11.0/24
+    Description: CIDR block for VPC
 
   InstanceType:
-    Description: EC2 instance type
     Type: String
     Default: t3.micro
-    AllowedValues:
-      - t2.micro
-      - t2.small
-      - t3.micro
-      - t3.small
+    AllowedValues: [t3.micro, t3.small, t3.medium]
+    Description: EC2 instance type
 
   KeyName:
-    Description: EC2 key pair for SSH access (leave blank to disable)
     Type: String
     Default: ""
+    Description: EC2 Key Pair name (optional)
 
-  AmiId:
-    Description: AMI ID for EC2 instances
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+Conditions:
+  HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
 
 Resources:
   # VPC
@@ -65,8 +38,8 @@ Resources:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref VpcCidr
-      EnableDnsSupport: true
       EnableDnsHostnames: true
+      EnableDnsSupport: true
       Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-${Environment}-vpc
@@ -87,24 +60,23 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  # Attach Internet Gateway to VPC
-  AttachGateway:
+  InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
 
   # Public Subnets
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Ref PublicSubnet1Cidr
       AvailabilityZone: !Select [0, !GetAZs '']
-      MapPublicIpOnLaunch: true
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCidr, 4, 8]]
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-public-1
+          Value: !Sub ${ProjectName}-${Environment}-public-subnet-1
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
@@ -114,12 +86,12 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Ref PublicSubnet2Cidr
       AvailabilityZone: !Select [1, !GetAZs '']
-      MapPublicIpOnLaunch: true
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCidr, 4, 8]]
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-public-2
+          Value: !Sub ${ProjectName}-${Environment}-public-subnet-2
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
@@ -130,11 +102,11 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Ref PrivateSubnet1Cidr
       AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCidr, 4, 8]]
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-private-1
+          Value: !Sub ${ProjectName}-${Environment}-private-subnet-1
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
@@ -144,69 +116,34 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Ref PrivateSubnet2Cidr
       AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Select [3, !Cidr [!Ref VpcCidr, 4, 8]]
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-private-2
+          Value: !Sub ${ProjectName}-${Environment}-private-subnet-2
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
 
-  # Elastic IPs for NAT Gateways
-  NatGatewayEIP1:
+  # NAT Gateway
+  NatGateway1EIP:
     Type: AWS::EC2::EIP
-    DependsOn: AttachGateway
+    DependsOn: InternetGatewayAttachment
     Properties:
       Domain: vpc
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-eip-1
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
+          Value: !Sub ${ProjectName}-${Environment}-nat-eip-1
 
-  NatGatewayEIP2:
-    Type: AWS::EC2::EIP
-    DependsOn: AttachGateway
-    Properties:
-      Domain: vpc
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-eip-2
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  # NAT Gateways
   NatGateway1:
     Type: AWS::EC2::NatGateway
     Properties:
-      AllocationId: !GetAtt NatGatewayEIP1.AllocationId
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
       SubnetId: !Ref PublicSubnet1
       Tags:
         - Key: Name
           Value: !Sub ${ProjectName}-${Environment}-nat-1
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  NatGateway2:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt NatGatewayEIP2.AllocationId
-      SubnetId: !Ref PublicSubnet2
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-nat-2
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
 
   # Route Tables
   PublicRouteTable:
@@ -215,11 +152,31 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-rt-public
+          Value: !Sub ${ProjectName}-${Environment}-public-rt
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
 
   PrivateRouteTable1:
     Type: AWS::EC2::RouteTable
@@ -227,256 +184,286 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-rt-private-1
+          Value: !Sub ${ProjectName}-${Environment}-private-rt-1
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
 
-  PrivateRouteTable2:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-rt-private-2
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  # Routes
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: AttachGateway
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  PrivateRoute1:
+  DefaultPrivateRoute1:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PrivateRouteTable1
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NatGateway1
 
-  PrivateRoute2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable2
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway2
-
-  # Route Table Associations
-  PublicSubnet1RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnet2RouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
   PrivateSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PrivateSubnet1
       RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
 
   PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
+      RouteTableId: !Ref PrivateRouteTable1
       SubnetId: !Ref PrivateSubnet2
-      RouteTableId: !Ref PrivateRouteTable2
 
-  # Security Group for EC2
-  EC2SecurityGroup:
+  # Security Groups
+  WebSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${ProjectName}-${Environment}-ec2-sg
-      GroupDescription: Security group for EC2 instances
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          SourceSecurityGroupId: !Ref BastionSecurityGroup
-          Description: SSH from bastion host only
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: HTTP access
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-          Description: HTTPS access
-        - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
-          Description: Application port from ALB
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          FromPort: 0
-          ToPort: 0
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-ec2-sg
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  # Security Group for Application Load Balancer
-  ALBSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: !Sub ${ProjectName}-${Environment}-alb-sg
-      GroupDescription: Security group for Application Load Balancer
+      GroupName: !Sub ${ProjectName}-${Environment}-web-sg
+      GroupDescription: Security group for web servers
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-          Description: HTTP access from internet
+          Description: HTTP
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-          Description: HTTPS access from internet
+          Description: HTTPS
       SecurityGroupEgress:
         - IpProtocol: tcp
-          FromPort: 8080
-          ToPort: 8080
-          DestinationSecurityGroupId: !Ref EC2SecurityGroup
-          Description: Forward to application instances
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP outbound
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS outbound
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+          Description: DNS outbound
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-alb-sg
+          Value: !Sub ${ProjectName}-${Environment}-web-sg
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
 
-  # Security Group for Bastion Host
-  BastionSecurityGroup:
+  AppSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${ProjectName}-${Environment}-bastion-sg
-      GroupDescription: Security group for bastion host
+      GroupName: !Sub ${ProjectName}-${Environment}-app-sg
+      GroupDescription: Security group for application servers
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0  # In production, restrict this to your IP
-          Description: SSH access from internet
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref WebSecurityGroup
+          Description: App port from web servers
       SecurityGroupEgress:
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          DestinationSecurityGroupId: !Ref EC2SecurityGroup
-          Description: SSH to application instances
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP outbound
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS outbound
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+          Description: DNS outbound
       Tags:
         - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-bastion-sg
+          Value: !Sub ${ProjectName}-${Environment}-app-sg
         - Key: Project
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
 
-  # Launch Template for EC2 instances
-  EC2LaunchTemplate:
-    Type: AWS::EC2::LaunchTemplate
+  # SSH Security Group (only if KeyName is provided)
+  SSHSecurityGroupRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: HasKeyName
     Properties:
-      LaunchTemplateName: !Sub ${ProjectName}-${Environment}-template
-      LaunchTemplateData:
-        ImageId: !Ref AmiId
-        InstanceType: !Ref InstanceType
-        KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
-        SecurityGroupIds:
-          - !Ref EC2SecurityGroup
-        IamInstanceProfile:
-          Arn: !GetAtt EC2InstanceProfile.Arn
-        UserData:
-          Fn::Base64: !Sub |
-            #!/bin/bash
-            yum update -y
-            yum install -y docker htop aws-cli
-            systemctl start docker
-            systemctl enable docker
-            usermod -aG docker ec2-user
+      GroupId: !Ref WebSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref VpcCidr
+      Description: SSH from VPC
 
-            # Install CloudWatch agent
-            wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-            rpm -U ./amazon-cloudwatch-agent.rpm
+  # EC2 Instances
+  WebServer1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316  # Amazon Linux 2 AMI
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref WebSecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Web Server 1 - ${ProjectName} ${Environment}</h1>" > /var/www/html/index.html
+          echo "<p>Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id)</p>" >> /var/www/html/index.html
+          echo "<p>Availability Zone: $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)</p>" >> /var/www/html/index.html
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            DeleteOnTermination: true
+            Encrypted: true
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      Monitoring: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}-web-1
+        - Key: Type
+          Value: WebServer
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
 
-            # Configure CloudWatch agent
-            cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CW_CONFIG'
-            {
-              "metrics": {
-                "namespace": "AWS/EC2/Custom",
-                "metrics_collected": {
-                  "cpu": {
-                    "measurement": [
-                      "cpu_usage_idle",
-                      "cpu_usage_iowait",
-                      "cpu_usage_user",
-                      "cpu_usage_system"
-                    ],
-                    "metrics_collection_interval": 60
-                  },
-                  "disk": {
-                    "measurement": [
-                      "used_percent"
-                    ],
-                    "metrics_collection_interval": 60,
-                    "resources": [
-                      "*"
-                    ]
-                  },
-                  "mem": {
-                    "measurement": [
-                      "mem_used_percent"
-                    ],
-                    "metrics_collection_interval": 60
-                  }
-                }
-              }
-            }
-            CW_CONFIG
+  WebServer2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
+      SubnetId: !Ref PublicSubnet2
+      SecurityGroupIds:
+        - !Ref WebSecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Web Server 2 - ${ProjectName} ${Environment}</h1>" > /var/www/html/index.html
+          echo "<p>Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id)</p>" >> /var/www/html/index.html
+          echo "<p>Availability Zone: $(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)</p>" >> /var/www/html/index.html
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            DeleteOnTermination: true
+            Encrypted: true
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      Monitoring: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}-web-2
+        - Key: Type
+          Value: WebServer
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
 
-            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-              -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
-        MetadataOptions:
-          HttpEndpoint: enabled
-          HttpTokens: required  # IMDSv2 only
-        Monitoring:
-          Enabled: true
-        TagSpecifications:
-          - ResourceType: instance
-            Tags:
-              - Key: Name
-                Value: !Sub ${ProjectName}-${Environment}-instance
-              - Key: Project
-                Value: !Ref ProjectName
-              - Key: Environment
-                Value: !Ref Environment
+  AppServer1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y java-11-openjdk-devel
+          echo "App Server 1 - ${ProjectName} ${Environment}" > /home/ec2-user/app-info.txt
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            DeleteOnTermination: true
+            Encrypted: true
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      Monitoring: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}-app-1
+        - Key: Type
+          Value: AppServer
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  AppServer2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c02fb55956c7d316
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y java-11-openjdk-devel
+          echo "App Server 2 - ${ProjectName} ${Environment}" > /home/ec2-user/app-info.txt
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            DeleteOnTermination: true
+            Encrypted: true
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      Monitoring: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${ProjectName}-${Environment}-app-2
+        - Key: Type
+          Value: AppServer
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
 
   # IAM Role for EC2 instances
   EC2Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ProjectName}-${Environment}-ec2-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -492,157 +479,73 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  # Instance Profile for EC2 role
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      InstanceProfileName: !Sub ${ProjectName}-${Environment}-instance-profile
       Roles:
         - !Ref EC2Role
 
-  # EC2 instances using launch template
-  EC2Instance1:
-    Type: AWS::EC2::Instance
-    Properties:
-      LaunchTemplate:
-        LaunchTemplateId: !Ref EC2LaunchTemplate
-        Version: !GetAtt EC2LaunchTemplate.LatestVersionNumber
-      SubnetId: !Ref PrivateSubnet1  # Deploy in private subnet
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-api-server-1
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  EC2Instance2:
-    Type: AWS::EC2::Instance
-    Properties:
-      LaunchTemplate:
-        LaunchTemplateId: !Ref EC2LaunchTemplate
-        Version: !GetAtt EC2LaunchTemplate.LatestVersionNumber
-      SubnetId: !Ref PrivateSubnet2  # Deploy in private subnet
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-api-server-2
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  # Bastion Host for SSH access
-  BastionHost:
-    Type: AWS::EC2::Instance
-    Condition: HasKeyName
-    Properties:
-      ImageId: !Ref AmiId
-      InstanceType: t3.micro
-      KeyName: !Ref KeyName
-      SubnetId: !Ref PublicSubnet1
-      SecurityGroupIds:
-        - !Ref BastionSecurityGroup
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-bastion
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  # EC2 Instances
-  EC2Instance1:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: !Ref InstanceType
-      ImageId: !Ref AmiId
-      SubnetId: !Ref PublicSubnet1
-      SecurityGroupIds:
-        - !Ref EC2SecurityGroup
-      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          yum update -y
-          yum install -y docker
-          systemctl start docker
-          systemctl enable docker
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-api-server-1
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-  EC2Instance2:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: !Ref InstanceType
-      ImageId: !Ref AmiId
-      SubnetId: !Ref PublicSubnet2
-      SecurityGroupIds:
-        - !Ref EC2SecurityGroup
-      KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          yum update -y
-          yum install -y docker
-          systemctl start docker
-          systemctl enable docker
-      Tags:
-        - Key: Name
-          Value: !Sub ${ProjectName}-${Environment}-api-server-2
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-
-Conditions:
-  HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
-
 Outputs:
-  VpcId:
+  VPCId:
     Description: VPC ID
     Value: !Ref VPC
     Export:
-      Name: !Sub ${AWS::StackName}-VpcId
+      Name: !Sub ${ProjectName}-${Environment}-VPC-ID
 
-  PublicSubnet1:
+  PublicSubnet1Id:
     Description: Public Subnet 1 ID
     Value: !Ref PublicSubnet1
     Export:
-      Name: !Sub ${AWS::StackName}-PublicSubnet1
+      Name: !Sub ${ProjectName}-${Environment}-PublicSubnet1-ID
 
-  PublicSubnet2:
+  PublicSubnet2Id:
     Description: Public Subnet 2 ID
     Value: !Ref PublicSubnet2
     Export:
-      Name: !Sub ${AWS::StackName}-PublicSubnet2
+      Name: !Sub ${ProjectName}-${Environment}-PublicSubnet2-ID
 
-  PrivateSubnet1:
+  PrivateSubnet1Id:
     Description: Private Subnet 1 ID
     Value: !Ref PrivateSubnet1
     Export:
-      Name: !Sub ${AWS::StackName}-PrivateSubnet1
+      Name: !Sub ${ProjectName}-${Environment}-PrivateSubnet1-ID
 
-  PrivateSubnet2:
+  PrivateSubnet2Id:
     Description: Private Subnet 2 ID
     Value: !Ref PrivateSubnet2
     Export:
-      Name: !Sub ${AWS::StackName}-PrivateSubnet2
+      Name: !Sub ${ProjectName}-${Environment}-PrivateSubnet2-ID
 
-  EC2SecurityGroupId:
-    Description: Security Group ID for EC2 instances
-    Value: !Ref EC2SecurityGroup
+  WebSecurityGroupId:
+    Description: Web Security Group ID
+    Value: !Ref WebSecurityGroup
     Export:
-      Name: !Sub ${AWS::StackName}-EC2SecurityGroupId
+      Name: !Sub ${ProjectName}-${Environment}-WebSG-ID
 
-  EC2Instance1Id:
-    Description: EC2 Instance 1 ID
-    Value: !Ref EC2Instance1
+  AppSecurityGroupId:
+    Description: App Security Group ID
+    Value: !Ref AppSecurityGroup
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-AppSG-ID
 
-  EC2Instance2Id:
-    Description: EC2 Instance 2 ID
-    Value: !Ref EC2Instance2
+  WebServer1Id:
+    Description: Web Server 1 Instance ID
+    Value: !Ref WebServer1
+
+  WebServer2Id:
+    Description: Web Server 2 Instance ID
+    Value: !Ref WebServer2
+
+  AppServer1Id:
+    Description: App Server 1 Instance ID
+    Value: !Ref AppServer1
+
+  AppServer2Id:
+    Description: App Server 2 Instance ID
+    Value: !Ref AppServer2
+
+  NATGatewayId:
+    Description: NAT Gateway ID
+    Value: !Ref NatGateway1
+    Export:
+      Name: !Sub ${ProjectName}-${Environment}-NAT-ID

@@ -1,0 +1,50 @@
+project:
+  name: microservices-infrastructure
+  owner: devops-team
+  regions:
+    - us-east-1
+    - us-west-2
+
+  # Global parameters
+  parameters:
+    ProjectName: microservices-taskcat
+    Environment: test
+    VpcCidr: 10.0.0.0/16
+    InstanceType: t3.micro
+    KeyName: ""
+
+  # Global tags
+  tags:
+    TestFramework: TaskCat
+    Purpose: CloudFormation-Testing
+
+tests:
+  # Test 1: Default configuration
+  default-test:
+    template: infrastructure.yaml
+    regions:
+      - us-east-1
+    parameters:
+      ProjectName: microservices-default
+      Environment: dev
+
+  # Test 2: Production-like configuration
+  prod-test:
+    template: infrastructure.yaml
+    regions:
+      - us-east-1
+    parameters:
+      ProjectName: microservices-prod
+      Environment: prod
+      InstanceType: t3.small
+      VpcCidr: 10.1.0.0/16
+
+  # Test 3: Multi-region test
+  multi-region-test:
+    template: infrastructure.yaml
+    regions:
+      - us-east-1
+      - us-west-2
+    parameters:
+      ProjectName: microservices-multiregion
+      Environment: staging

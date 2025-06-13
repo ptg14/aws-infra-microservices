@@ -2,16 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
-        DOCKER_IMAGE = 'yourdockerusername/microservice-app'
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
-        SONARQUBE_TOKEN = credentials('sonarqube-token')
-        AWS_REGION = 'us-east-1'
+        DOCKER_REGISTRY = 'your-docker-registry'
+        DOCKER_IMAGE = 'microservices-app'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        SONARQUBE_SERVER = 'SonarQube'
     }
 
     tools {
-        maven 'Maven-3.8.0'  // Configure in Global Tool Configuration
-        jdk 'JDK-11'         // Configure in Global Tool Configuration
+        maven 'Maven-3.8.0'
+        jdk 'JDK-11'
     }
 
     stages {
@@ -19,63 +18,76 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    env.GIT_COMMIT_SHORT = sh(
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                    ).trim()
+                    env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+                    env.GIT_BRANCH = sh(returnStdout: true, script: 'git branch --show-current').trim()
                 }
             }
         }
 
-        stage('Build Application') {
+        stage('Build') {
             steps {
-                sh '''
-                    echo "Building Java application..."
-                    # If you have Java app, uncomment below:
-                    # mvn clean compile -DskipTests
-
-                    # For now, create dummy artifact
-                    mkdir -p target
-                    echo "Dummy application JAR" > target/app.jar
-                '''
+                echo 'Building application...'
+                script {
+                    if (fileExists('pom.xml')) {
+                        sh 'mvn clean compile'
+                    } else if (fileExists('build.gradle')) {
+                        sh './gradlew clean build'
+                    } else {
+                        echo 'No build file found, skipping build step'
+                    }
+                }
             }
         }
 
         stage('Unit Tests') {
             steps {
-                sh '''
-                    echo "Running unit tests..."
-                    # mvn test
-                    # For demo, create test results
-                    mkdir -p target/surefire-reports
-                    echo '<?xml version="1.0" encoding="UTF-8"?>
-                    <testsuite name="DemoTest" tests="1" failures="0" errors="0">
-                        <testcase name="testSuccess" classname="com.example.DemoTest"/>
-                    </testsuite>' > target/surefire-reports/TEST-DemoTest.xml
-                '''
+                echo 'Running unit tests...'
+                script {
+                    if (fileExists('pom.xml')) {
+                        sh 'mvn test'
+                    } else if (fileExists('build.gradle')) {
+                        sh './gradlew test'
+                    } else {
+                        echo 'Creating mock test results for demo'
+                        sh '''
+                            mkdir -p target/surefire-reports
+                            cat > target/surefire-reports/TEST-DemoTest.xml << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="DemoTest" tests="1" failures="0" errors="0" time="0.1">
+    <testcase name="demoTest" classname="DemoTest" time="0.1"/>
+</testsuite>
+EOF
+                        '''
+                    }
+                }
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    script {
+                        if (fileExists('target/surefire-reports/*.xml')) {
+                            publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
+                        }
+                    }
                 }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Code Quality Analysis') {
             steps {
                 script {
-                    def scannerHome = tool 'SonarQube Scanner'
-                    withSonarQubeEnv('SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=microservices-app \
-                                -Dsonar.projectName='Microservices Application' \
-                                -Dsonar.projectVersion=1.0 \
-                                -Dsonar.sources=. \
-                                -Dsonar.language=java \
-                                -Dsonar.sourceEncoding=UTF-8 \
-                                -Dsonar.login=${SONARQUBE_TOKEN}
-                        """
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                        if (fileExists('pom.xml')) {
+                            sh 'mvn sonar:sonar'
+                        } else {
+                            // For projects without Maven/Gradle
+                            sh '''
+                                sonar-scanner \
+                                  -Dsonar.projectKey=microservices-app \
+                                  -Dsonar.sources=. \
+                                  -Dsonar.host.url=$SONAR_HOST_URL \
+                                  -Dsonar.login=$SONAR_AUTH_TOKEN
+                            '''
+                        }
                     }
                 }
             }
@@ -83,7 +95,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     script {
                         def qg = waitForQualityGate()
                         if (qg.status != 'OK') {
@@ -94,102 +106,96 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Security Scan') {
             steps {
+                echo 'Running security scan with Trivy...'
                 script {
-                    // Create Dockerfile if not exists
-                    writeFile file: 'Dockerfile', text: '''
-FROM openjdk:11-jre-slim
-WORKDIR /app
-COPY target/app.jar app.jar
-EXPOSE 8080
-CMD ["java", "-jar", "app.jar"]
-'''
+                    // Trivy filesystem scan
+                    sh '''
+                        docker run --rm -v $(pwd):/workspace \
+                        aquasec/trivy:latest fs /workspace \
+                        --format json --output trivy-fs-report.json || true
+                    '''
 
-                    sh """
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
-                    """
+                    // Archive security scan results
+                    archiveArtifacts artifacts: 'trivy-fs-report.json', allowEmptyArchive: true
                 }
             }
         }
 
-        stage('Security Scan with Trivy') {
+        stage('Build Docker Image') {
             steps {
+                echo 'Building Docker image...'
                 script {
-                    sh '''
-                        # Install Trivy if not present
-                        if ! command -v trivy &> /dev/null; then
-                            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                        fi
-
-                        # Scan Docker image for vulnerabilities
-                        trivy image --severity HIGH,CRITICAL --format json --output trivy-report.json ${DOCKER_IMAGE}:${DOCKER_TAG}
-
-                        # Display results
-                        trivy image --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    '''
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", "-f jenkins/docker/Dockerfile .")
+                    docker.build("${DOCKER_IMAGE}:latest", "-f jenkins/docker/Dockerfile .")
                 }
             }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'trivy-report.json', fingerprint: true
+        }
+
+        stage('Docker Security Scan') {
+            steps {
+                echo 'Scanning Docker image for vulnerabilities...'
+                script {
+                    sh '''
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image ${DOCKER_IMAGE}:${DOCKER_TAG} \
+                        --format json --output trivy-image-report.json || true
+                    '''
+                    archiveArtifacts artifacts: 'trivy-image-report.json', allowEmptyArchive: true
                 }
             }
         }
 
         stage('Push Docker Image') {
-            steps {
-                sh """
-                    echo ${DOCKER_HUB_CREDENTIALS_PSW} | docker login -u ${DOCKER_HUB_CREDENTIALS_USR} --password-stdin
-                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    docker push ${DOCKER_IMAGE}:latest
-                """
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                }
             }
             steps {
                 script {
-                    // Update Kubernetes manifests with new image tag
-                    sh """
-                        sed -i 's|image: ${DOCKER_IMAGE}:[^ ]*|image: ${DOCKER_IMAGE}:${DOCKER_TAG}|' kubernetes/deployment.yaml
-                    """
-
-                    // Apply Kubernetes manifests
-                    withKubeConfig([credentialsId: 'kubernetes-config']) {
-                        sh """
-                            kubectl apply -f kubernetes/deployment.yaml
-                            kubectl apply -f kubernetes/service.yaml
-
-                            # Wait for deployment to complete
-                            kubectl rollout status deployment/microservice-app --timeout=300s
-
-                            # Get service details
-                            kubectl get services microservice-app
-                        """
+                    withDockerRegistry([credentialsId: 'docker-hub-credentials']) {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                        docker.image("${DOCKER_IMAGE}:latest").push()
                     }
                 }
             }
         }
 
-        stage('Deploy to AWS ECS') {
+        stage('Deploy to Development') {
             when {
                 branch 'develop'
             }
             steps {
+                echo 'Deploying to development environment...'
                 script {
-                    withAWS(credentials: 'aws-credentials', region: env.AWS_REGION) {
-                        sh """
-                            # Update ECS service with new image
-                            aws ecs update-service \
-                                --cluster microservices-cluster \
-                                --service microservice-app \
-                                --force-new-deployment
-                        """
+                    withKubeConfig([credentialsId: 'kubernetes-config']) {
+                        sh '''
+                            sed -i "s|IMAGE_TAG|${DOCKER_TAG}|g" jenkins/k8s/deployment.yaml
+                            kubectl apply -f jenkins/k8s/ --namespace=dev
+                            kubectl rollout status deployment/microservices-app --namespace=dev
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying to production environment...'
+                input message: 'Deploy to production?', ok: 'Deploy'
+                script {
+                    withKubeConfig([credentialsId: 'kubernetes-config']) {
+                        sh '''
+                            sed -i "s|IMAGE_TAG|${DOCKER_TAG}|g" jenkins/k8s/deployment.yaml
+                            kubectl apply -f jenkins/k8s/ --namespace=prod
+                            kubectl rollout status deployment/microservices-app --namespace=prod
+                        '''
                     }
                 }
             }
@@ -198,47 +204,32 @@ CMD ["java", "-jar", "app.jar"]
 
     post {
         always {
-            // Clean up
-            sh '''
-                docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true
-                docker rmi ${DOCKER_IMAGE}:latest || true
-                docker system prune -f
-            '''
+            echo 'Cleaning up...'
+            script {
+                // Clean up Docker images
+                sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
+                sh "docker rmi ${DOCKER_IMAGE}:latest || true"
 
-            // Archive artifacts
-            archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true, allowEmptyArchive: true
+                // Archive build artifacts
+                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
 
-            // Publish test results
-            publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'target/site/jacoco',
-                reportFiles: 'index.html',
-                reportName: 'Code Coverage Report'
-            ])
+                // Publish test results
+                publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+            }
         }
-
         success {
-            echo '✅ Pipeline completed successfully!'
-            slackSend(
-                channel: '#deployments',
-                color: 'good',
-                message: "✅ Deployment successful: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
-            )
+            echo 'Pipeline completed successfully!'
+            // Optional: Send Slack notification
+            // slackSend channel: '#deployments',
+            //           color: 'good',
+            //           message: "✅ Deployment successful for ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
         }
-
         failure {
-            echo '❌ Pipeline failed!'
-            slackSend(
-                channel: '#deployments',
-                color: 'danger',
-                message: "❌ Deployment failed: ${env.JOB_NAME} - ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
-            )
-        }
-
-        unstable {
-            echo '⚠️ Pipeline is unstable!'
+            echo 'Pipeline failed!'
+            // Optional: Send Slack notification
+            // slackSend channel: '#deployments',
+            //           color: 'danger',
+            //           message: "❌ Deployment failed for ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
         }
     }
 }

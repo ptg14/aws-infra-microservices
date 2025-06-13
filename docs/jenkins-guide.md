@@ -1,653 +1,319 @@
-# Jenkins CI/CD Pipeline cho Microservices
+# AWS Infrastructure Microservices with Jenkins CI/CD
 
-Hướng dẫn triển khai Jenkins CI/CD pipeline để tự động hóa quy trình build, test và deploy ứng dụng microservices với tích hợp SonarQube và security scanning.
+## 📋 Overview
 
-## 📋 Tổng quan
-
-Pipeline Jenkins này bao gồm:
-- **Build & Test**: Maven build và unit tests tự động
-- **SonarQube Integration**: Kiểm tra chất lượng mã nguồn
+This project demonstrates a complete CI/CD pipeline using Jenkins for microservices deployment with:
+- **Jenkins Pipeline**: Automated build, test, and deployment
+- **SonarQube Integration**: Code quality analysis
 - **Security Scanning**: Trivy vulnerability scanner
-- **Docker Build**: Tạo và push Docker images
-- **Multi-Platform Deploy**: Kubernetes và AWS ECS deployment
-- **Notification**: Slack notifications
+- **Docker Containerization**: Application packaging
+- **Kubernetes Deployment**: Container orchestration
+- **Infrastructure as Code**: Terraform for AWS resources
 
-## 🏗️ Kiến trúc Pipeline
+## 🏗️ Architecture
 
 ```
-Git Push → Jenkins → Build → Test → SonarQube → Security Scan → Docker Build → Deploy
+Git Push → Jenkins → Build → Test → SonarQube → Security Scan → Docker Build → K8s Deploy
                                      ↓
                               Quality Gate Check
 ```
 
-## 📁 Cấu trúc Files
+## 📁 Project Structure
 
 ```
-jenkins/
-├── Jenkinsfile                 # Pipeline configuration
-├── sonar-project.properties    # SonarQube settings
-└── README.md                   # File này
+aws-infra-microservices/
+├── jenkins/
+│   ├── Jenkinsfile                 # Pipeline configuration
+│   ├── sonar-project.properties    # SonarQube settings
+│   ├── docker/
+│   │   └── Dockerfile             # Application Docker image
+│   └── k8s/
+│       ├── deployment.yaml        # Kubernetes deployment
+│       └── configmap.yaml         # Configuration
+├── terraform/                     # Infrastructure as Code
+├── scripts/
+│   ├── setup-jenkins.sh          # Environment setup
+│   └── cleanup.sh                # Environment cleanup
+├── docker-compose.yml             # Local development
+├── pom.xml                       # Maven configuration
+└── src/                          # Application source code
 ```
 
-## 🚀 Hướng dẫn triển khai
+# 🚀 Quick Start
 
-### Bước 1: Setup Jenkins Server trên AWS
+## Prerequisites
 
-#### 1.1 Tạo EC2 Instance cho Jenkins
+- Docker and Docker Compose
+- Git
+- Java 11+ (for local development)
+- kubectl (for Kubernetes deployment)
+
+## Setup
+
+1. **Clone the repository:**
 ```bash
-# Tạo security group cho Jenkins
-aws ec2 create-security-group \
-  --group-name jenkins-sg \
-  --description "Security group for Jenkins server" \
-  --vpc-id vpc-xxxxxxxx
-
-# Thêm rules cho Jenkins
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-xxxxxxxx \
-  --protocol tcp \
-  --port 8080 \
-  --cidr 0.0.0.0/0
-
-aws ec2 authorize-security-group-ingress \
-  --group-id sg-xxxxxxxx \
-  --protocol tcp \
-  --port 22 \
-  --cidr 0.0.0.0/0
-
-# Launch EC2 instance
-aws ec2 run-instances \
-  --image-id ami-0c02fb55956c7d316 \
-  --instance-type t3.medium \
-  --key-name your-key-pair \
-  --security-group-ids sg-xxxxxxxx \
-  --subnet-id subnet-xxxxxxxx \
-  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=Jenkins-Server}]'
+git clone <your-repo-url>
+cd aws-infra-microservices
 ```
 
-#### 1.2 Cài đặt Jenkins
+2. **Start the CI/CD environment:**
 ```bash
-# SSH vào EC2 instance
-ssh -i your-key.pem ec2-user@<jenkins-server-ip>
-
-# Update system
-sudo yum update -y
-
-# Install Java 11
-sudo yum install -y java-11-openjdk-devel
-
-# Add Jenkins repository
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-
-# Install Jenkins
-sudo yum install -y jenkins
-
-# Start Jenkins
-sudo systemctl start jenkins
-sudo systemctl enable jenkins
-
-# Get initial admin password
-sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+chmod +x scripts/setup-jenkins.sh
+./scripts/setup-jenkins.sh
 ```
 
-#### 1.3 Cài đặt Docker
+3. **Access the services:**
+- Jenkins: http://localhost:8080
+- SonarQube: http://localhost:9000 (admin/admin)
+- Demo App: http://localhost:8081
+
+## Jenkins Configuration
+
+### 1. Initial Setup
+1. Access Jenkins at http://localhost:8080
+2. Use the initial admin password from the setup script output
+3. Install suggested plugins plus:
+   - Pipeline
+   - Docker Pipeline
+   - SonarQube Scanner
+   - Kubernetes
+   - Credentials Plugin
+
+### 2. Configure Tools
+Go to **Manage Jenkins** → **Global Tool Configuration**:
+
+- **Maven**: Maven-3.8.0 (auto-install)
+- **JDK**: JDK-11 (auto-install)
+- **SonarQube Scanner**: Latest (auto-install)
+- **Docker**: Docker (auto-install)
+
+### 3. Configure SonarQube
+1. In SonarQube (http://localhost:9000), generate a token
+2. In Jenkins: **Manage Jenkins** → **Configure System** → **SonarQube servers**
+   - Name: SonarQube
+   - Server URL: http://sonarqube:9000
+   - Token: Add from Credentials
+
+### 4. Add Credentials
+**Manage Jenkins** → **Credentials** → **Global** → **Add Credentials**:
+
+- **Docker Hub**: Username/Password (ID: docker-hub-credentials)
+- **SonarQube Token**: Secret text (ID: sonarqube-token)
+- **Kubernetes Config**: Secret file (ID: kubernetes-config)
+
+### 5. Create Pipeline Job
+1. **New Item** → **Pipeline**
+2. **Pipeline Definition**: Pipeline script from SCM
+3. **SCM**: Git
+4. **Repository URL**: Your repository URL
+5. **Script Path**: jenkins/Jenkinsfile
+
+## Pipeline Stages
+
+1. **Checkout**: Get source code from Git
+2. **Build**: Compile application (Maven/Gradle)
+3. **Unit Tests**: Run automated tests
+4. **Code Quality Analysis**: SonarQube scan
+5. **Quality Gate**: Enforce quality standards
+6. **Security Scan**: Trivy filesystem scan
+7. **Build Docker Image**: Create container image
+8. **Docker Security Scan**: Container vulnerability scan
+9. **Push Docker Image**: Push to registry (for main/develop branches)
+10. **Deploy**: Deploy to Kubernetes (environment-specific)
+
+## Security Features
+
+### Code Quality
+- SonarQube integration for code quality metrics
+- Quality gates to prevent deployment of poor-quality code
+- Test coverage tracking
+
+### Security Scanning
+- **Trivy**: Filesystem vulnerability scanning
+- **Docker Security**: Container image vulnerability scanning
+- **Non-root containers**: Security best practices
+
+### Access Control
+- Jenkins credentials management
+- Kubernetes RBAC (when configured)
+- Docker registry authentication
+
+## Local Development
+
+### Build and Test Locally
 ```bash
-# Install Docker
-sudo yum install -y docker
-sudo systemctl start docker
-sudo systemctl enable docker
+# Build with Maven
+mvn clean compile
 
-# Add jenkins user to docker group
-sudo usermod -aG docker jenkins
-sudo systemctl restart jenkins
+# Run tests
+mvn test
+
+# Run SonarQube analysis (requires local SonarQube)
+mvn sonar:sonar
+
+# Build Docker image
+docker build -t microservices-app:local -f jenkins/docker/Dockerfile .
+
+# Run container
+docker run -p 8080:8080 microservices-app:local
 ```
 
-#### 1.4 Cài đặt kubectl
+### Start Full Environment
 ```bash
-# Install kubectl
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# Start all services
+docker-compose up -d
 
-# Verify installation
-kubectl version --client
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
-### Bước 2: Cấu hình Jenkins
+## Kubernetes Deployment
 
-#### 2.1 Initial Setup
+### Local Kubernetes (Minikube/K3s)
 ```bash
-# Access Jenkins UI
-http://your-jenkins-server:8080
+# Start Minikube
+minikube start
 
-# Enter admin password và cài đặt suggested plugins
-# Tạo admin user
+# Create namespaces
+kubectl create namespace dev
+kubectl create namespace prod
+
+# Deploy application
+kubectl apply -f jenkins/k8s/ --namespace=dev
+
+# Check deployment
+kubectl get pods -n dev
+kubectl get services -n dev
 ```
 
-#### 2.2 Cài đặt Required Plugins
-Vào **Manage Jenkins** → **Manage Plugins** → **Available** và cài đặt:
-- Pipeline
-- Docker Pipeline
-- Kubernetes
-- SonarQube Scanner
-- GitHub Integration
-- Credentials Plugin
-- Slack Notification Plugin
-
-#### 2.3 Cấu hình Global Tools
-Vào **Manage Jenkins** → **Global Tool Configuration**:
-
-**Maven Configuration:**
-```
-Name: Maven-3.8.0
-Install automatically: ✓
-Version: 3.8.0
-```
-
-**JDK Configuration:**
-```
-Name: JDK-11
-Install automatically: ✓
-Version: OpenJDK 11
-```
-
-**SonarQube Scanner:**
-```
-Name: SonarQube Scanner
-Install automatically: ✓
-Version: Latest
-```
-
-### Bước 3: Setup SonarQube Server
-
-#### 3.1 Tạo SonarQube bằng Docker
+### Access Application
 ```bash
-# Create network
-docker network create sonarqube
+# Port forward to access locally
+kubectl port-forward service/microservices-app-service 8080:80 -n dev
 
-# Run PostgreSQL
-docker run -d --name sonarqube-db \
-  --network sonarqube \
-  -e POSTGRES_USER=sonar \
-  -e POSTGRES_PASSWORD=sonar \
-  -e POSTGRES_DB=sonarqube \
-  -v postgresql_data:/var/lib/postgresql/data \
-  postgres:13
-
-# Run SonarQube
-docker run -d --name sonarqube \
-  --network sonarqube \
-  -p 9000:9000 \
-  -e SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonarqube \
-  -e SONAR_JDBC_USERNAME=sonar \
-  -e SONAR_JDBC_PASSWORD=sonar \
-  -v sonarqube_data:/opt/sonarqube/data \
-  -v sonarqube_logs:/opt/sonarqube/logs \
-  -v sonarqube_extensions:/opt/sonarqube/extensions \
-  sonarqube:latest
+# Or setup ingress
+kubectl apply -f jenkins/k8s/
 ```
 
-#### 3.2 Cấu hình SonarQube
+## Monitoring and Troubleshooting
+
+### Jenkins
+- **Build Logs**: Check console output for each build
+- **Pipeline Visualization**: Blue Ocean plugin
+- **System Logs**: Manage Jenkins → System Log
+
+### SonarQube
+- **Quality Gates**: Project → Quality Gates
+- **Security Hotspots**: Project → Security Hotspots
+- **Code Coverage**: Project → Coverage
+
+### Docker
 ```bash
-# Access SonarQube
-http://your-sonarqube-server:9000
+# Check running containers
+docker ps
 
-# Default login: admin/admin
-# Change password khi đăng nhập lần đầu
+# View container logs
+docker logs <container-name>
 
-# Generate token:
-# Administration → Security → Users → Tokens → Generate
+# Execute into container
+docker exec -it <container-name> /bin/bash
 ```
 
-#### 3.3 Cấu hình SonarQube trong Jenkins
-Vào **Manage Jenkins** → **Configure System** → **SonarQube servers**:
-```
-Name: SonarQube
-Server URL: http://your-sonarqube-server:9000
-Server authentication token: [Add từ Credentials]
-```
-
-### Bước 4: Cấu hình Credentials
-
-#### 4.1 Docker Hub Credentials
+### Kubernetes
 ```bash
-# Manage Jenkins → Credentials → Global → Add Credentials
-Type: Username with password
-ID: docker-hub-credentials
-Username: your-docker-username
-Password: your-docker-password
-```
-
-#### 4.2 SonarQube Token
-```bash
-Type: Secret text
-ID: sonarqube-token
-Secret: your-sonarqube-token
-```
-
-#### 4.3 Kubernetes Config
-```bash
-Type: Secret file
-ID: kubernetes-config
-File: your-kubeconfig-file
-```
-
-#### 4.4 AWS Credentials
-```bash
-Type: AWS Credentials
-ID: aws-credentials
-Access Key ID: your-aws-access-key
-Secret Access Key: your-aws-secret-key
-```
-
-#### 4.5 Slack Token (Optional)
-```bash
-Type: Secret text
-ID: slack-token
-Secret: your-slack-bot-token
-```
-
-### Bước 5: Tạo Jenkins Pipeline
-
-#### 5.1 Tạo Pipeline Job
-```bash
-# Jenkins Dashboard → New Item
-# Tên: microservices-pipeline
-# Type: Pipeline
-# OK
-```
-
-#### 5.2 Cấu hình Pipeline
-**Pipeline Definition:**
-```
-Pipeline script from SCM
-```
-
-**SCM Configuration:**
-```
-SCM: Git
-Repository URL: https://github.com/your-repo/aws-infra-microservices.git
-Credentials: [Add GitHub credentials nếu private repo]
-Branch: */main
-Script Path: jenkins/Jenkinsfile
-```
-
-**Build Triggers:**
-```
-☑ GitHub hook trigger for GITScm polling
-☑ Poll SCM: H/5 * * * *
-```
-
-### Bước 6: Cấu hình Kubernetes Cluster
-
-#### 6.1 Tạo EKS Cluster (nếu chưa có)
-```bash
-# Install eksctl
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
-
-# Create EKS cluster
-eksctl create cluster \
-  --name microservices-cluster \
-  --region us-east-1 \
-  --node-type t3.medium \
-  --nodes 2 \
-  --nodes-min 1 \
-  --nodes-max 4 \
-  --managed
-```
-
-#### 6.2 Cấu hình kubectl
-```bash
-# Update kubeconfig
-aws eks update-kubeconfig \
-  --region us-east-1 \
-  --name microservices-cluster
-
-# Verify connection
-kubectl get nodes
-
-# Copy kubeconfig for Jenkins
-cp ~/.kube/config /tmp/kubeconfig-jenkins
-```
-
-### Bước 7: Customization Pipeline
-
-#### 7.1 Cập nhật Docker Image Name
-Sửa file [`jenkins/Jenkinsfile`](jenkins/Jenkinsfile):
-```groovy
-environment {
-    DOCKER_IMAGE = 'your-dockerhub-username/microservice-app'  # Thay đổi này
-    // ...existing code...
-}
-```
-
-#### 7.2 Cập nhật Kubernetes Manifests
-Sửa file [`kubernetes/deployment.yaml`](kubernetes/deployment.yaml):
-```yaml
-# ...existing code...
-containers:
-- name: microservice-app
-  image: your-dockerhub-username/microservice-app:latest  # Thay đổi này
-  # ...existing code...
-```
-
-#### 7.3 Cấu hình SonarQube Properties
-File [`jenkins/sonar-project.properties`](jenkins/sonar-project.properties) đã được cấu hình sẵn:
-```properties
-sonar.projectKey=microservices-app
-sonar.projectName=Microservices Application
-sonar.projectVersion=1.0
-sonar.sources=src/main
-sonar.tests=src/test
-```
-
-### Bước 8: Test Pipeline
-
-#### 8.1 Chạy Pipeline lần đầu
-```bash
-# Jenkins Dashboard → microservices-pipeline → Build Now
-# Monitor logs để kiểm tra từng stage
-```
-
-#### 8.2 Trigger tự động
-```bash
-# Push code để trigger pipeline
-git add .
-git commit -m "Update application code"
-git push origin main
-
-# Pipeline sẽ tự động chạy
-```
-
-### Bước 9: Monitoring và Validation
-
-#### 9.1 Kiểm tra Jenkins Logs
-```bash
-# View pipeline logs trong Jenkins UI
-# Check console output cho từng stage
-```
-
-#### 9.2 Verify SonarQube Analysis
-```bash
-# Access SonarQube dashboard
-http://your-sonarqube-server:9000
-
-# Check project: microservices-app
-# Review code quality metrics
-```
-
-#### 9.3 Verify Kubernetes Deployment
-```bash
-# Check deployments
-kubectl get deployments
-
 # Check pods
-kubectl get pods
+kubectl get pods -n <namespace>
+
+# View pod logs
+kubectl logs <pod-name> -n <namespace>
+
+# Describe pod
+kubectl describe pod <pod-name> -n <namespace>
 
 # Check services
-kubectl get services
-
-# Get application URL
-kubectl get service microservice-app
+kubectl get services -n <namespace>
 ```
 
-#### 9.4 Verify Docker Images
+## Best Practices
+
+### Code Quality
+- Maintain minimum test coverage (configure in SonarQube)
+- Fix critical security vulnerabilities
+- Follow coding standards
+
+### Security
+- Regularly update base Docker images
+- Scan for vulnerabilities in dependencies
+- Use non-root containers
+- Rotate credentials regularly
+
+### CI/CD
+- Use feature branches for development
+- Require code review before merging
+- Automated testing at all levels
+- Gradual rollout for production deployments
+
+## Cleanup
+
+To remove all containers and volumes:
 ```bash
-# Check Docker Hub cho pushed images
-# Or check local registry nếu sử dụng
-docker images | grep microservice-app
+chmod +x scripts/cleanup.sh
+./scripts/cleanup.sh
 ```
 
-## 🔧 Advanced Configuration
-
-### Multi-Environment Deployment
-
-#### Staging Environment
-```groovy
-stage('Deploy to Staging') {
-    when {
-        branch 'develop'
-    }
-    steps {
-        script {
-            withKubeConfig([credentialsId: 'kubernetes-config']) {
-                sh """
-                    kubectl apply -f kubernetes/deployment.yaml -n staging
-                    kubectl apply -f kubernetes/service.yaml -n staging
-                """
-            }
-        }
-    }
-}
-```
-
-#### Production Environment
-```groovy
-stage('Deploy to Production') {
-    when {
-        branch 'main'
-    }
-    steps {
-        input message: 'Deploy to Production?', ok: 'Deploy'
-        script {
-            withKubeConfig([credentialsId: 'kubernetes-config']) {
-                sh """
-                    kubectl apply -f kubernetes/deployment.yaml -n production
-                    kubectl apply -f kubernetes/service.yaml -n production
-                """
-            }
-        }
-    }
-}
-```
-
-### Blue-Green Deployment
-```groovy
-stage('Blue-Green Deploy') {
-    steps {
-        script {
-            def currentColor = sh(
-                script: "kubectl get service microservice-app -o jsonpath='{.spec.selector.version}'",
-                returnStdout: true
-            ).trim()
-
-            def newColor = currentColor == 'blue' ? 'green' : 'blue'
-
-            sh """
-                sed -i 's/version: v1/version: ${newColor}/' kubernetes/deployment.yaml
-                kubectl apply -f kubernetes/deployment.yaml
-                kubectl patch service microservice-app -p '{"spec":{"selector":{"version":"${newColor}"}}}'
-            """
-        }
-    }
-}
-```
-
-### Rollback Strategy
-```groovy
-stage('Rollback') {
-    when {
-        expression { params.ROLLBACK == true }
-    }
-    steps {
-        script {
-            sh """
-                kubectl rollout undo deployment/microservice-app
-                kubectl rollout status deployment/microservice-app
-            """
-        }
-    }
-}
-```
-
-## 🔒 Security Best Practices
-
-### 1. Secure Credentials Management
-```bash
-# Sử dụng Jenkins Credentials Plugin
-# Không hardcode sensitive data
-# Rotate credentials định kỳ
-```
-
-### 2. Docker Security
-```bash
-# Scan images với Trivy
-# Use non-root users in containers
-# Keep base images updated
-```
-
-### 3. Kubernetes Security
-```bash
-# Use RBAC
-# Network policies
-# Pod security policies
-```
-
-### 4. SonarQube Security Rules
-```properties
-# Enable security hotspot detection
-sonar.security.hotspots.enabled=true
-# Set quality gate thresholds
-sonar.qualitygate.wait=true
-```
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-#### 1. Jenkins Connection Issues
+#### Jenkins Connection Issues
 ```bash
-# Check Jenkins service
-sudo systemctl status jenkins
+# Check Jenkins logs
+docker logs jenkins
 
-# Check ports
-netstat -tlnp | grep 8080
-
-# Check logs
-sudo tail -f /var/log/jenkins/jenkins.log
+# Restart Jenkins
+docker restart jenkins
 ```
 
-#### 2. Docker Permission Issues
-```bash
-# Add jenkins user to docker group
-sudo usermod -aG docker jenkins
-sudo systemctl restart jenkins
-
-# Test docker access
-sudo -u jenkins docker ps
-```
-
-#### 3. Kubernetes Connection Issues
-```bash
-# Verify kubeconfig
-kubectl config current-context
-
-# Test connection
-kubectl get nodes
-
-# Check credentials in Jenkins
-```
-
-#### 4. SonarQube Connection Issues
+#### SonarQube Connection Issues
 ```bash
 # Check SonarQube status
-docker ps | grep sonarqube
+docker ps | grep sonar
 
 # Check SonarQube logs
 docker logs sonarqube
-
-# Test API connection
-curl http://your-sonarqube-server:9000/api/system/status
 ```
 
-#### 5. Pipeline Failures
+#### Docker Permission Issues
 ```bash
-# Check Jenkins console output
-# Verify all credentials are configured
-# Check tool configurations
-# Verify script syntax
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Restart session or reboot
 ```
 
-### Debug Commands
+#### Kubernetes Connection Issues
 ```bash
-# Jenkins CLI
-java -jar jenkins-cli.jar -s http://localhost:8080/ help
+# Check cluster status
+kubectl cluster-info
 
-# Pipeline validation
-# Use Jenkins → Pipeline → Pipeline Syntax để validate
+# Check node status
+kubectl get nodes
 
-# Docker debugging
-docker run --rm -it your-image:tag /bin/bash
-
-# Kubernetes debugging
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
+# Verify kubeconfig
+kubectl config view
 ```
 
-## 📊 Monitoring và Metrics
+## Contributing
 
-### Jenkins Metrics
-```bash
-# Performance monitoring
-# Build success/failure rates
-# Build duration trends
-# Resource utilization
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-### SonarQube Metrics
-```bash
-# Code coverage trends
-# Technical debt ratio
-# Security vulnerabilities
-# Code duplications
-```
+## License
 
-### Application Metrics
-```bash
-# Kubernetes metrics
-kubectl top nodes
-kubectl top pods
-
-# Application health checks
-curl http://your-app/actuator/health
-```
-
-## 🧹 Maintenance
-
-### Regular Tasks
-```bash
-# 1. Update Jenkins plugins monthly
-# 2. Clean up old build artifacts
-# 3. Rotate credentials quarterly
-# 4. Update base Docker images
-# 5. Review and update security scans
-```
-
-### Backup Strategy
-```bash
-# Jenkins configuration backup
-sudo tar -czf jenkins-backup.tar.gz /var/lib/jenkins/
-
-# SonarQube database backup
-docker exec sonarqube-db pg_dump -U sonar sonarqube > sonarqube-backup.sql
-```
-
-## 📚 Additional Resources
-
-- [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
-- [SonarQube Documentation](https://docs.sonarqube.org/)
-- [Trivy Security Scanner](https://github.com/aquasecurity/trivy)
-- [Kubernetes Deployment Guide](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
-- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
-
-## 🚀 Next Steps
-
-1. **Implement GitOps**: Sử dụng ArgoCD hoặc Flux
-2. **Add Monitoring**: Prometheus + Grafana
-3. **Service Mesh**: Istio integration
-4. **Automated Testing**: Integration và E2E tests
-5. **Multi-Region Deployment**: Cross-region failover
-
----
-
-**Lưu ý**: Thay thế tất cả placeholder values (như `your-docker-username`, `your-sonarqube-server`, etc.) bằng values thực tế của bạn trước khi triển khai.
+This project is licensed under the MIT License - see the LICENSE file for details.

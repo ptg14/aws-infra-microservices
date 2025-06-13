@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: microservices-app-config
+  labels:
+    app: microservices-app
+data:
+  application.properties: |
+    server.port=8080
+    management.endpoints.web.exposure.include=health,info,metrics
+    management.endpoint.health.show-details=always
+    spring.application.name=microservices-app
+
+    # Database configuration (if needed)
+    # spring.datasource.url=jdbc:h2:mem:testdb
+    # spring.datasource.driver-class-name=org.h2.Driver
+    # spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+    # Logging configuration
+    logging.level.root=INFO
+    logging.level.com.example=DEBUG
+    logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
