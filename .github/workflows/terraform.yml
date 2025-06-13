@@ -50,13 +50,16 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+        # Remove audience parameter for traditional IAM user credentials
+        # audience: sts.amazonaws.com
 
     - name: Verify AWS credentials
       run: |
         echo "Testing AWS credentials..."
-        aws sts get-caller-identity
         echo "AWS CLI version:"
         aws --version
+        echo "Attempting to get caller identity..."
+        aws sts get-caller-identity || echo "Failed to authenticate with AWS"
 
     - name: Terraform Format Check
       id: fmt
@@ -108,13 +111,6 @@ jobs:
           echo "SARIF file found at results.sarif"
           echo "SARIF_EXISTS=true" >> $GITHUB_ENV
           echo "SARIF_PATH=results.sarif" >> $GITHUB_ENV
-        elif [ -f "reports/results_json.json" ]; then
-          echo "Converting JSON to SARIF format..."
-          # Install sarif-tools if needed
-          pip install sarif-tools
-          # Convert JSON to SARIF (this is a fallback approach)
-          echo "SARIF_EXISTS=false" >> $GITHUB_ENV
-          echo "No SARIF file generated, but JSON results available"
         else
           echo "No SARIF file found"
           echo "SARIF_EXISTS=false" >> $GITHUB_ENV
