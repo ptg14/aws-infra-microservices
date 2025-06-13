@@ -76,7 +76,7 @@ jobs:
         skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23
 
     - name: Upload Checkov results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: reports/results.sarif
@@ -140,7 +140,7 @@ jobs:
 
     - name: Save Terraform Plan
       if: github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: terraform-plan
         path: terraform/tfplan
