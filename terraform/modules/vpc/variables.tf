@@ -1,3 +1,23 @@
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets"
+  type        = list(string)
+}
+
+variable "private_subnet_cidrs" {
+  description = "CIDR blocks for private subnets"
+  type        = list(string)
+}
+
+variable "azs" {
+  description = "Availability zones"
+  type        = list(string)
+}
+
 variable "project" {
   description = "Project name"
   type        = string
@@ -6,29 +26,4 @@ variable "project" {
 variable "environment" {
   description = "Environment name"
   type        = string
-}
-
-variable "region" {
-  description = "AWS region"
-  type        = string
-}
-
-variable "vpc_cidr" {
-  description = "VPC CIDR block"
-  type        = string
-}
-
-variable "public_subnet_cidrs" {
-  description = "Public subnet CIDR blocks"
-  type        = list(string)
-}
-
-variable "private_subnet_cidrs" {
-  description = "Private subnet CIDR blocks"
-  type        = list(string)
-}
-
-variable "azs" {
-  description = "Availability zones"
-  type        = list(string)
 }

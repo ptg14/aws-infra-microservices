@@ -243,11 +243,11 @@ terraform validate
 # Chạy Checkov security scan
 echo "Running Checkov security scan..."
 mkdir -p reports
-checkov -d . --framework terraform --output cli --output json --output-file-path reports/checkov-report.json
+checkov -d . --framework terraform --output cli --output json --output-file-path reports
 
 # Hiển thị kết quả Checkov
 echo "Checkov scan results:"
-cat reports/checkov-report.json | jq '.summary'
+cat reports/results_json.json | jq '.summary'
 
 # Tạo execution plan
 echo "Creating Terraform execution plan..."
