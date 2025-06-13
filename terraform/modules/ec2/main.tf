@@ -144,13 +144,13 @@ resource "aws_instance" "web" {
   subnet_id              = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
 
   # Thêm các cấu hình bảo mật
-  monitoring             = true  # Enable detailed monitoring
-  ebs_optimized         = true  # Enable EBS optimization
+  monitoring    = true # Enable detailed monitoring
+  ebs_optimized = true # Enable EBS optimization
 
   # Cấu hình IMDS v2
   metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"  # Force IMDSv2
+    http_endpoint               = "enabled"
+    http_tokens                 = "required" # Force IMDSv2
     http_put_response_hop_limit = 1
   }
 
@@ -194,13 +194,13 @@ resource "aws_instance" "app" {
   subnet_id              = var.private_subnet_ids[count.index % length(var.private_subnet_ids)]
 
   # Thêm các cấu hình bảo mật
-  monitoring             = true  # Enable detailed monitoring
-  ebs_optimized         = true  # Enable EBS optimization
+  monitoring    = true # Enable detailed monitoring
+  ebs_optimized = true # Enable EBS optimization
 
   # Cấu hình IMDS v2
   metadata_options {
-    http_endpoint = "enabled"
-    http_tokens   = "required"  # Force IMDSv2
+    http_endpoint               = "enabled"
+    http_tokens                 = "required" # Force IMDSv2
     http_put_response_hop_limit = 1
   }
 

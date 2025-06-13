@@ -29,7 +29,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = false  # Sửa từ true thành false
+  map_public_ip_on_launch = false # Sửa từ true thành false
 
   tags = {
     Name        = "${var.project}-${var.environment}-public-subnet-${count.index + 1}"

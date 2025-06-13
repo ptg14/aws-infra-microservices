@@ -1,0 +1,485 @@
+terraform scan results:
+
+Passed checks: 51, Failed checks: 6, Skipped checks: 0
+
+Check: CKV_AWS_41: "Ensure no hard coded AWS access key and secret key exists in provider"
+	PASSED for resource: aws.default
+	File: /main.tf:19-29
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/secrets-policies/bc-aws-secrets-5
+Check: CKV_AWS_23: "Ensure every security group and rule has a description"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31
+Check: CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382
+Check: CKV_AWS_25: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 3389"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-2
+Check: CKV_AWS_24: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-1-port-security
+Check: CKV_AWS_277: "Ensure no security groups allow ingress from 0.0.0.0:0 to port -1"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-security-group-does-not-allow-all-traffic-on-all-ports
+Check: CKV_AWS_23: "Ensure every security group and rule has a description"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-31
+Check: CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/bc-aws-382
+Check: CKV_AWS_25: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 3389"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-2
+Check: CKV_AWS_24: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 22"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-1-port-security
+Check: CKV_AWS_277: "Ensure no security groups allow ingress from 0.0.0.0:0 to port -1"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-security-group-does-not-allow-all-traffic-on-all-ports
+Check: CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-security-groups-do-not-allow-ingress-from-00000-to-port-80
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_46: "Ensure no hard-coded secrets exist in EC2 user data"
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/secrets-policies/bc-aws-secrets-1
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_88: "EC2 instance should not have public IP."
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/public-policies/public-12
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_8: "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted"
+	PASSED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-13
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_46: "Ensure no hard-coded secrets exist in EC2 user data"
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/secrets-policies/bc-aws-secrets-1
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_88: "EC2 instance should not have public IP."
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/public-policies/public-12
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_8: "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted"
+	PASSED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-13
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_46: "Ensure no hard-coded secrets exist in EC2 user data"
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/secrets-policies/bc-aws-secrets-1
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_88: "EC2 instance should not have public IP."
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/public-policies/public-12
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_8: "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted"
+	PASSED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-13
+Check: CKV_AWS_79: "Ensure Instance Metadata Service Version 1 is not enabled"
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-general-31
+Check: CKV_AWS_46: "Ensure no hard-coded secrets exist in EC2 user data"
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/secrets-policies/bc-aws-secrets-1
+Check: CKV_AWS_126: "Ensure that detailed monitoring is enabled for EC2 instances"
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances
+Check: CKV_AWS_88: "EC2 instance should not have public IP."
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/public-policies/public-12
+Check: CKV_AWS_135: "Ensure that EC2 is EBS optimized"
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-ec2-is-ebs-optimized
+Check: CKV_AWS_8: "Ensure all data stored in the Launch configuration or instance Elastic Blocks Store is securely encrypted"
+	PASSED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/general-13
+Check: CKV_AWS_130: "Ensure VPC subnets do not assign public IP by default"
+	PASSED for resource: module.vpc.aws_subnet.public[0]
+	File: /modules/vpc/main.tf:26-40
+	Calling File: /main.tf:37-46
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default
+Check: CKV_AWS_130: "Ensure VPC subnets do not assign public IP by default"
+	PASSED for resource: module.vpc.aws_subnet.private[0]
+	File: /modules/vpc/main.tf:43-56
+	Calling File: /main.tf:37-46
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default
+Check: CKV_AWS_130: "Ensure VPC subnets do not assign public IP by default"
+	PASSED for resource: module.vpc.aws_subnet.public[1]
+	File: /modules/vpc/main.tf:26-40
+	Calling File: /main.tf:37-46
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default
+Check: CKV_AWS_130: "Ensure VPC subnets do not assign public IP by default"
+	PASSED for resource: module.vpc.aws_subnet.private[1]
+	File: /modules/vpc/main.tf:43-56
+	Calling File: /main.tf:37-46
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default
+Check: CKV2_AWS_35: "AWS NAT Gateways should be utilized for the default route"
+	PASSED for resource: module.vpc.aws_route_table.public
+	File: /modules/vpc/main.tf:90-103
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-nat-gateways-are-utilized-for-the-default-route
+Check: CKV2_AWS_35: "AWS NAT Gateways should be utilized for the default route"
+	PASSED for resource: module.vpc.aws_route_table.private[0]
+	File: /modules/vpc/main.tf:106-121
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-nat-gateways-are-utilized-for-the-default-route
+Check: CKV2_AWS_35: "AWS NAT Gateways should be utilized for the default route"
+	PASSED for resource: module.vpc.aws_route_table.private[1]
+	File: /modules/vpc/main.tf:106-121
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-nat-gateways-are-utilized-for-the-default-route
+Check: CKV2_AWS_44: "Ensure AWS route table with VPC peering does not contain routes overly permissive to all traffic"
+	PASSED for resource: module.vpc.aws_route_table.public
+	File: /modules/vpc/main.tf:90-103
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-route-table-with-vpc-peering-does-not-contain-routes-overly-permissive-to-all-traffic
+Check: CKV2_AWS_44: "Ensure AWS route table with VPC peering does not contain routes overly permissive to all traffic"
+	PASSED for resource: module.vpc.aws_route_table.private[0]
+	File: /modules/vpc/main.tf:106-121
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-route-table-with-vpc-peering-does-not-contain-routes-overly-permissive-to-all-traffic
+Check: CKV2_AWS_44: "Ensure AWS route table with VPC peering does not contain routes overly permissive to all traffic"
+	PASSED for resource: module.vpc.aws_route_table.private[1]
+	File: /modules/vpc/main.tf:106-121
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-route-table-with-vpc-peering-does-not-contain-routes-overly-permissive-to-all-traffic
+Check: CKV2_AWS_5: "Ensure that Security Groups are attached to another resource"
+	PASSED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-security-groups-are-attached-to-ec2-instances-or-elastic-network-interfaces-enis
+Check: CKV2_AWS_5: "Ensure that Security Groups are attached to another resource"
+	PASSED for resource: module.ec2.aws_security_group.app
+	File: /modules/ec2/main.tf:74-134
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-security-groups-are-attached-to-ec2-instances-or-elastic-network-interfaces-enis
+Check: CKV2_AWS_19: "Ensure that all EIP addresses allocated to a VPC are attached to EC2 instances"
+	PASSED for resource: module.vpc.aws_eip.nat[0]
+	File: /modules/vpc/main.tf:59-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-all-eip-addresses-allocated-to-a-vpc-are-attached-to-ec2-instances
+Check: CKV2_AWS_19: "Ensure that all EIP addresses allocated to a VPC are attached to EC2 instances"
+	PASSED for resource: module.vpc.aws_eip.nat[1]
+	File: /modules/vpc/main.tf:59-71
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-that-all-eip-addresses-allocated-to-a-vpc-are-attached-to-ec2-instances
+Check: CKV2_AWS_12: "Ensure the default security group of every VPC restricts all traffic"
+	PASSED for resource: module.vpc.aws_vpc.main
+	File: /modules/vpc/main.tf:2-12
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/networking-4
+Check: CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
+	FAILED for resource: module.ec2.aws_security_group.web
+	File: /modules/ec2/main.tf:2-71
+	Calling File: /main.tf:49-61
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-security-groups-do-not-allow-ingress-from-00000-to-port-80
+
+		Code lines for this resource are too many. Please use IDE of your choice to review the file.
+Check: CKV2_AWS_11: "Ensure VPC flow logging is enabled in all VPCs"
+	FAILED for resource: module.vpc.aws_vpc.main
+	File: /modules/vpc/main.tf:2-12
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/logging-9-enable-vpc-flow-logging
+
+		2  | resource "aws_vpc" "main" {
+		3  |   cidr_block           = var.vpc_cidr
+		4  |   enable_dns_hostnames = true
+		5  |   enable_dns_support   = true
+		6  | 
+		7  |   tags = {
+		8  |     Name        = "${var.project}-${var.environment}-vpc"
+		9  |     Project     = var.project
+		10 |     Environment = var.environment
+		11 |   }
+		12 | }
+
+Check: CKV2_AWS_41: "Ensure an IAM role is attached to EC2 instance"
+	FAILED for resource: module.ec2.aws_instance.web[0]
+	File: /modules/ec2/main.tf:137-184
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-an-iam-role-is-attached-to-ec2-instance
+
+		137 | resource "aws_instance" "web" {
+		138 |   count = var.ec2_instance_count
+		139 | 
+		140 |   ami                    = var.ami_id
+		141 |   instance_type          = var.instance_type
+		142 |   key_name               = var.key_name != "" ? var.key_name : null
+		143 |   vpc_security_group_ids = [aws_security_group.web.id]
+		144 |   subnet_id              = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
+		145 | 
+		146 |   # Thêm các cấu hình bảo mật
+		147 |   monitoring    = true # Enable detailed monitoring
+		148 |   ebs_optimized = true # Enable EBS optimization
+		149 | 
+		150 |   # Cấu hình IMDS v2
+		151 |   metadata_options {
+		152 |     http_endpoint               = "enabled"
+		153 |     http_tokens                 = "required" # Force IMDSv2
+		154 |     http_put_response_hop_limit = 1
+		155 |   }
+		156 | 
+		157 |   user_data = base64encode(templatefile("${path.module}/user_data_web.sh", {
+		158 |     instance_name = "${var.project}-${var.environment}-web-${count.index + 1}"
+		159 |   }))
+		160 | 
+		161 |   root_block_device {
+		162 |     volume_type           = "gp3"
+		163 |     volume_size           = 20
+		164 |     delete_on_termination = true
+		165 |     encrypted             = true
+		166 | 
+		167 |     tags = {
+		168 |       Name        = "${var.project}-${var.environment}-web-${count.index + 1}-root"
+		169 |       Project     = var.project
+		170 |       Environment = var.environment
+		171 |     }
+		172 |   }
+		173 | 
+		174 |   tags = {
+		175 |     Name        = "${var.project}-${var.environment}-web-${count.index + 1}"
+		176 |     Type        = "WebServer"
+		177 |     Project     = var.project
+		178 |     Environment = var.environment
+		179 |   }
+		180 | 
+		181 |   lifecycle {
+		182 |     create_before_destroy = true
+		183 |   }
+		184 | }
+
+Check: CKV2_AWS_41: "Ensure an IAM role is attached to EC2 instance"
+	FAILED for resource: module.ec2.aws_instance.app[0]
+	File: /modules/ec2/main.tf:187-234
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-an-iam-role-is-attached-to-ec2-instance
+
+		187 | resource "aws_instance" "app" {
+		188 |   count = var.ec2_instance_count
+		189 | 
+		190 |   ami                    = var.ami_id
+		191 |   instance_type          = var.instance_type
+		192 |   key_name               = var.key_name != "" ? var.key_name : null
+		193 |   vpc_security_group_ids = [aws_security_group.app.id]
+		194 |   subnet_id              = var.private_subnet_ids[count.index % length(var.private_subnet_ids)]
+		195 | 
+		196 |   # Thêm các cấu hình bảo mật
+		197 |   monitoring    = true # Enable detailed monitoring
+		198 |   ebs_optimized = true # Enable EBS optimization
+		199 | 
+		200 |   # Cấu hình IMDS v2
+		201 |   metadata_options {
+		202 |     http_endpoint               = "enabled"
+		203 |     http_tokens                 = "required" # Force IMDSv2
+		204 |     http_put_response_hop_limit = 1
+		205 |   }
+		206 | 
+		207 |   user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
+		208 |     instance_name = "${var.project}-${var.environment}-app-${count.index + 1}"
+		209 |   }))
+		210 | 
+		211 |   root_block_device {
+		212 |     volume_type           = "gp3"
+		213 |     volume_size           = 20
+		214 |     delete_on_termination = true
+		215 |     encrypted             = true
+		216 | 
+		217 |     tags = {
+		218 |       Name        = "${var.project}-${var.environment}-app-${count.index + 1}-root"
+		219 |       Project     = var.project
+		220 |       Environment = var.environment
+		221 |     }
+		222 |   }
+		223 | 
+		224 |   tags = {
+		225 |     Name        = "${var.project}-${var.environment}-app-${count.index + 1}"
+		226 |     Type        = "AppServer"
+		227 |     Project     = var.project
+		228 |     Environment = var.environment
+		229 |   }
+		230 | 
+		231 |   lifecycle {
+		232 |     create_before_destroy = true
+		233 |   }
+		234 | }
+Check: CKV2_AWS_41: "Ensure an IAM role is attached to EC2 instance"
+	FAILED for resource: module.ec2.aws_instance.web[1]
+	File: /modules/ec2/main.tf:137-184
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-an-iam-role-is-attached-to-ec2-instance
+
+		137 | resource "aws_instance" "web" {
+		138 |   count = var.ec2_instance_count
+		139 | 
+		140 |   ami                    = var.ami_id
+		141 |   instance_type          = var.instance_type
+		142 |   key_name               = var.key_name != "" ? var.key_name : null
+		143 |   vpc_security_group_ids = [aws_security_group.web.id]
+		144 |   subnet_id              = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
+		145 | 
+		146 |   # Thêm các cấu hình bảo mật
+		147 |   monitoring    = true # Enable detailed monitoring
+		148 |   ebs_optimized = true # Enable EBS optimization
+		149 | 
+		150 |   # Cấu hình IMDS v2
+		151 |   metadata_options {
+		152 |     http_endpoint               = "enabled"
+		153 |     http_tokens                 = "required" # Force IMDSv2
+		154 |     http_put_response_hop_limit = 1
+		155 |   }
+		156 | 
+		157 |   user_data = base64encode(templatefile("${path.module}/user_data_web.sh", {
+		158 |     instance_name = "${var.project}-${var.environment}-web-${count.index + 1}"
+		159 |   }))
+		160 | 
+		161 |   root_block_device {
+		162 |     volume_type           = "gp3"
+		163 |     volume_size           = 20
+		164 |     delete_on_termination = true
+		165 |     encrypted             = true
+		166 | 
+		167 |     tags = {
+		168 |       Name        = "${var.project}-${var.environment}-web-${count.index + 1}-root"
+		169 |       Project     = var.project
+		170 |       Environment = var.environment
+		171 |     }
+		172 |   }
+		173 | 
+		174 |   tags = {
+		175 |     Name        = "${var.project}-${var.environment}-web-${count.index + 1}"
+		176 |     Type        = "WebServer"
+		177 |     Project     = var.project
+		178 |     Environment = var.environment
+		179 |   }
+		180 | 
+		181 |   lifecycle {
+		182 |     create_before_destroy = true
+		183 |   }
+		184 | }
+
+Check: CKV2_AWS_41: "Ensure an IAM role is attached to EC2 instance"
+	FAILED for resource: module.ec2.aws_instance.app[1]
+	File: /modules/ec2/main.tf:187-234
+	Guide: https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-iam-policies/ensure-an-iam-role-is-attached-to-ec2-instance
+
+		187 | resource "aws_instance" "app" {
+		188 |   count = var.ec2_instance_count
+		189 | 
+		190 |   ami                    = var.ami_id
+		191 |   instance_type          = var.instance_type
+		192 |   key_name               = var.key_name != "" ? var.key_name : null
+		193 |   vpc_security_group_ids = [aws_security_group.app.id]
+		194 |   subnet_id              = var.private_subnet_ids[count.index % length(var.private_subnet_ids)]
+		195 | 
+		196 |   # Thêm các cấu hình bảo mật
+		197 |   monitoring    = true # Enable detailed monitoring
+		198 |   ebs_optimized = true # Enable EBS optimization
+		199 | 
+		200 |   # Cấu hình IMDS v2
+		201 |   metadata_options {
+		202 |     http_endpoint               = "enabled"
+		203 |     http_tokens                 = "required" # Force IMDSv2
+		204 |     http_put_response_hop_limit = 1
+		205 |   }
+		206 | 
+		207 |   user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
+		208 |     instance_name = "${var.project}-${var.environment}-app-${count.index + 1}"
+		209 |   }))
+		210 | 
+		211 |   root_block_device {
+		212 |     volume_type           = "gp3"
+		213 |     volume_size           = 20
+		214 |     delete_on_termination = true
+		215 |     encrypted             = true
+		216 | 
+		217 |     tags = {
+		218 |       Name        = "${var.project}-${var.environment}-app-${count.index + 1}-root"
+		219 |       Project     = var.project
+		220 |       Environment = var.environment
+		221 |     }
+		222 |   }
+		223 | 
+		224 |   tags = {
+		225 |     Name        = "${var.project}-${var.environment}-app-${count.index + 1}"
+		226 |     Type        = "AppServer"
+		227 |     Project     = var.project
+		228 |     Environment = var.environment
+		229 |   }
+		230 | 
+		231 |   lifecycle {
+		232 |     create_before_destroy = true
+		233 |   }
+		234 | }
