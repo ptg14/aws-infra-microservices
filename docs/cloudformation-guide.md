@@ -1,4 +1,3 @@
-
 Hướng dẫn toàn diện để triển khai hạ tầng AWS sử dụng CloudFormation với quy trình CI/CD tự động hóa thông qua AWS CodePipeline, tích hợp cfn-lint và TaskCat để đảm bảo chất lượng mã.
 
 ## 📋 Tổng quan
@@ -23,10 +22,11 @@ CodeCommit → CodePipeline → CodeBuild (cfn-lint + TaskCat) → CloudFormatio
 ```
 aws-infra-microservices/
 ├── cloudformation/
-│   ├── infrastructure.yaml      # Template chính
-│   ├── buildspec.yml           # Build instructions
-│   └── .taskcat.yml           # TaskCat configuration
-
+│   ├── infrastructure.yaml         # Template chính
+│   ├── buildspec.yml               # Build instructions
+│   └── .taskcat.yml                # TaskCat configuration
+└── docs/
+    └── cloudformation-guide.md     # This guide
 ```
 
 ## 🚀 Hướng dẫn Triển khai

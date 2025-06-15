@@ -1,6 +1,55 @@
 # AWS Infrastructure Deployment với Terraform và GitHub Actions
 
-## 🚀 Hướng dẫn triển khai
+Hướng dẫn toàn diện để triển khai hạ tầng AWS sử dụng Terraform với quy trình CI/CD tự động hóa thông qua GitHub Actions, tích hợp Checkov và TFLint để đảm bảo chất lượng mã.
+
+## 📋 Tổng quan
+
+Hệ thống này tự động hóa việc triển khai hạ tầng AWS bao gồm:
+- **Terraform Templates**: Định nghĩa hạ tầng dưới dạng mã (Infrastructure as Code)
+- **GitHub Actions**: Tự động hóa quy trình CI/CD
+- **Checkov**: Kiểm tra bảo mật và best practices
+- **TFLint**: Kiểm tra cú pháp và conventions
+- **Remote State Management**: Quản lý state với S3 và DynamoDB
+
+## 🏗️ Kiến trúc Hệ thống
+
+```
+GitHub Repository → GitHub Actions → Terraform Plan/Apply → AWS Infrastructure
+                         ↓
+                  Security & Quality Checks
+                  (Checkov + TFLint)
+                         ↓
+                  S3 Backend + DynamoDB Lock
+```
+
+## 📁 Cấu trúc Dự án
+
+```
+aws-infra-microservices/
+├── terraform/
+│   ├── main.tf                 # Terraform main configuration
+│   ├── variables.tf            # Variable definitions
+│   ├── outputs.tf              # Output definitions
+│   ├── terraform.tfvars        # Variable values
+│   ├── modules/
+│   ├── vpc/
+│   │   ├── main.tf             # VPC, subnets, gateways, routing
+│   │   ├── variables.tf        # VPC module variables
+│   │   └── outputs.tf          # VPC module outputs
+│   └── ec2/
+│       ├── main.tf             # EC2 instances, security groups
+│       ├── variables.tf        # EC2 module variables
+│       ├── outputs.tf          # EC2 module outputs
+│       ├── user_data_web.sh    # Web server initialization script
+│       └── user_data_app.sh    # App server initialization script
+├── .github/
+│   └── workflows/
+│       └── terraform.yml       # GitHub Actions workflow
+└── docs/
+    └── terraform-guide.md      # This guide
+```
+
+## 🚀 Hướng dẫn Triển khai
 
 ### Bước 1: Chuẩn bị môi trường (Sử dụng AWS CloudShell với sudo)
 
@@ -59,10 +108,15 @@ sudo yum install -y tree
 # Cài đặt git (nếu chưa có)
 sudo yum install -y git
 
+# Cài đặt TFLint
+curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+sudo mv tflint /usr/local/bin/
+
 # Xác minh các cài đặt
 jq --version
 tree --version
 git --version
+tflint --version
 ```
 
 #### 1.5 Kiểm tra cấu hình AWS (CloudShell tự động có credentials)
@@ -330,6 +384,144 @@ echo "Username: your-github-username"
 echo "Password: ghp_xxxxxxxxxxxxxxxxxxxx (GitHub PAT)"
 ```
 
+#### 5.3 Cấu hình GitHub Actions Workflow
+```bash
+# Tạo GitHub Actions workflow
+mkdir -p .github/workflows
+
+cat > .github/workflows/terraform.yml << 'EOF'
+name: 'Terraform Infrastructure'
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'terraform/**' ]
+  pull_request:
+    branches: [ main ]
+    paths: [ 'terraform/**' ]
+  workflow_dispatch:
+
+env:
+  TF_VERSION: '1.6.6'
+  AWS_REGION: 'us-east-1'
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: production
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Format Check
+      id: fmt
+      run: terraform fmt -check -recursive
+
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Checkov
+      run: pip install checkov
+
+    - name: Run Checkov
+      run: |
+        checkov -d . --framework terraform --output cli --output json --output-file-path reports/
+        echo "### Checkov Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+        cat reports/results_json.json | jq '.summary' >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+    - name: Terraform Plan
+      id: plan
+      if: github.event_name == 'pull_request'
+      run: terraform plan -no-color -input=false -var-file="terraform.tfvars"
+      continue-on-error: true
+
+    - name: Update Pull Request
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      env:
+        PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+          <details><summary>Show Plan</summary>
+
+          \`\`\`\n
+          ${process.env.PLAN}
+          \`\`\`
+
+          </details>
+
+          *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    - name: Terraform Plan Status
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false -var-file="terraform.tfvars"
+EOF
+
+echo "✅ GitHub Actions workflow đã được tạo"
+```
+
+#### 5.4 Cấu hình GitHub Secrets
+```bash
+echo "=== GitHub Secrets Setup ==="
+echo "Truy cập GitHub repository settings và thêm các secrets sau:"
+echo ""
+echo "Repository → Settings → Secrets and variables → Actions"
+echo ""
+echo "Required secrets:"
+echo "• AWS_ACCESS_KEY_ID: $(aws configure get aws_access_key_id || echo 'Your AWS Access Key')"
+echo "• AWS_SECRET_ACCESS_KEY: $(aws configure get aws_secret_access_key || echo 'Your AWS Secret Key')"
+echo ""
+echo "Lưu ý: Nên tạo IAM user riêng cho GitHub Actions với quyền hạn tối thiểu"
+```
+
 ### Bước 6: Lưu trữ thông tin quan trọng
 
 #### 6.1 Lưu thông tin bucket và cấu hình
@@ -377,6 +569,19 @@ aws s3 ls s3://$BUCKET_NAME
 
 # Check DynamoDB table:
 aws dynamodb describe-table --table-name terraform-state-lock --output table
+
+===============================================
+    GitHub Actions
+===============================================
+# Workflow file: .github/workflows/terraform.yml
+# Secrets to configure:
+#   - AWS_ACCESS_KEY_ID
+#   - AWS_SECRET_ACCESS_KEY
+#
+# Workflow triggers:
+#   - Push to main branch (auto-deploy)
+#   - Pull request (plan only)
+#   - Manual dispatch
 EOF
 
 echo "Information saved to ~/aws-infra-info.txt"
@@ -392,7 +597,7 @@ echo "=== Terraform Infrastructure Status ==="
 cd ~/projects/aws-infra-microservices/terraform
 
 echo "Current workspace: $(terraform workspace show)"
-echo "State file location: $(terraform remote config -get)"
+echo "State file location: $(terraform remote config -get 2>/dev/null || echo 'Remote backend configured')"
 echo ""
 
 echo "=== Resources Count ==="
@@ -409,6 +614,11 @@ echo ""
 echo "=== AWS Resources Summary ==="
 aws ec2 describe-instances --filters "Name=tag:Project,Values=microservices" --query 'length(Reservations[].Instances[])' --output text | xargs echo "EC2 Instances:"
 aws ec2 describe-vpcs --filters "Name=tag:Project,Values=microservices" --query 'length(Vpcs[])' --output text | xargs echo "VPCs:"
+
+echo ""
+echo "=== GitHub Actions Status ==="
+echo "Workflow: .github/workflows/terraform.yml"
+echo "Check status: https://github.com/your-username/aws-infra-microservices/actions"
 EOF
 
 chmod +x ~/quick-status.sh
@@ -426,6 +636,11 @@ echo "terraform plan -var-file='terraform.tfvars'     # Plan changes"
 echo "terraform apply -var-file='terraform.tfvars'    # Apply changes"
 echo "terraform output                                 # Show outputs"
 echo "~/quick-status.sh                                # Quick status"
+echo "git status                                       # Check git status"
+echo "git push                                         # Trigger GitHub Actions"
+echo ""
+echo "=== GitHub Actions ==="
+echo "https://github.com/your-username/aws-infra-microservices/actions"
 echo ""
 echo "Ready for Terraform operations!"
 EOF
@@ -450,6 +665,8 @@ alias tfp='terraform plan -var-file="terraform.tfvars"'
 alias tfa='terraform apply -var-file="terraform.tfvars"'
 alias tfo='terraform output'
 alias tfs='terraform state list'
+alias tff='terraform fmt -recursive'
+alias tfv='terraform validate'
 
 # AWS aliases
 alias aws-instances='aws ec2 describe-instances --filters "Name=tag:Project,Values=microservices" --output table'
@@ -459,11 +676,64 @@ alias aws-sgs='aws ec2 describe-security-groups --filters "Name=tag:Project,Valu
 # Project aliases
 alias infra='cd ~/projects/aws-infra-microservices/terraform'
 alias status='~/quick-status.sh'
+
+# Git aliases
+alias gs='git status'
+alias ga='git add .'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git log --oneline -10'
 EOF
 
 source ~/.bashrc
 
-echo "Aliases added! Use: tf, tfp, tfa, tfo, tfs, infra, status"
+echo "Aliases added! Use: tf, tfp, tfa, tfo, tfs, tff, tfv, infra, status, gs, ga, gc, gp, gl"
+```
+
+#### 7.2 Tạo Pre-commit Hooks
+```bash
+# Tạo pre-commit hook script
+cat > ~/projects/aws-infra-microservices/.git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+# Terraform pre-commit hook
+
+echo "🔍 Running pre-commit checks..."
+
+# Change to terraform directory
+cd terraform
+
+# Format check
+echo "📝 Checking Terraform formatting..."
+if ! terraform fmt -check -recursive; then
+    echo "❌ Terraform formatting issues found. Run 'terraform fmt -recursive' to fix."
+    exit 1
+fi
+
+# Validation
+echo "✅ Validating Terraform configuration..."
+if ! terraform validate; then
+    echo "❌ Terraform validation failed."
+    exit 1
+fi
+
+# Checkov scan
+echo "🔒 Running security scan..."
+if command -v checkov >/dev/null 2>&1; then
+    checkov -d . --framework terraform --quiet --compact
+    if [ $? -ne 0 ]; then
+        echo "❌ Security scan found issues."
+        exit 1
+    fi
+else
+    echo "⚠️  Checkov not installed, skipping security scan."
+fi
+
+echo "✅ All pre-commit checks passed!"
+EOF
+
+chmod +x ~/projects/aws-infra-microservices/.git/hooks/pre-commit
+
+echo "✅ Pre-commit hooks configured"
 ```
 
 ### Bước 8: Dọn dẹp (khi cần)
@@ -511,12 +781,168 @@ echo "Deleting DynamoDB table..."
 aws dynamodb delete-table --table-name terraform-state-lock --region us-east-1
 
 echo "=== Cleanup completed ==="
+echo "Note: GitHub repository and actions remain unchanged"
 EOF
 
 chmod +x ~/cleanup-infra.sh
 
 echo "Cleanup script created: ~/cleanup-infra.sh"
 echo "Use with caution - it will destroy all resources!"
+```
+
+## 🔧 Testing Local
+
+### Test Terraform Configuration
+```bash
+# Test cú pháp và validation
+terraform fmt -check -recursive
+terraform validate
+
+# Test plan với different var files
+terraform plan -var-file="terraform.tfvars" -var-file="dev.tfvars"
+
+# Test với different workspaces
+terraform workspace new staging
+terraform workspace select staging
+terraform plan -var-file="staging.tfvars"
+terraform workspace select default
+```
+
+### Test Checkov Security Scan
+```bash
+# Test với specific checks
+checkov -d . --framework terraform --check CKV_AWS_20,CKV_AWS_23
+
+# Test với custom config
+checkov -d . --config-file .checkov.yml
+
+# Test và ignore specific findings
+checkov -d . --framework terraform --skip-check CKV_AWS_20
+```
+
+### Test TFLint
+```bash
+# Initialize TFLint
+tflint --init
+
+# Run TFLint with specific rules
+tflint --enable-rule=terraform_deprecated_interpolation
+tflint --enable-rule=terraform_unused_declarations
+
+# Run with custom config
+tflint --config=.tflint.hcl
+```
+
+## 🔍 Troubleshooting
+
+### Các Lỗi Thường Gặp:
+
+#### 1. Terraform State Lock Issues
+```bash
+# Lỗi state lock
+ERROR: Error acquiring the state lock
+
+# Giải pháp: Force unlock (cẩn thận!)
+terraform force-unlock <LOCK_ID>
+
+# Hoặc kiểm tra DynamoDB table
+aws dynamodb scan --table-name terraform-state-lock
+```
+
+#### 2. GitHub Actions Failures
+```bash
+# Lỗi AWS credentials
+ERROR: Unable to locate credentials
+
+# Giải pháp: Kiểm tra GitHub secrets
+# Repository → Settings → Secrets and variables → Actions
+
+# Test credentials locally
+aws sts get-caller-identity
+```
+
+#### 3. Checkov Security Failures
+```bash
+# Lỗi security scan
+ERROR: CKV_AWS_20: S3 Bucket has an ACL defined which allows public access
+
+# Giải pháp: Update Terraform configuration hoặc skip check
+# Add to .checkov.yml:
+skip-check:
+  - CKV_AWS_20
+```
+
+#### 4. Backend Configuration Issues
+```bash
+# Lỗi backend initialization
+ERROR: Backend configuration changed
+
+# Giải pháp: Reconfigure backend
+terraform init -reconfigure
+
+# Hoặc migrate state
+terraform init -migrate-state
+```
+
+### Lệnh Debug Hữu ích:
+
+```bash
+# Terraform debugging
+export TF_LOG=DEBUG
+terraform plan -var-file="terraform.tfvars"
+
+# Check state file
+terraform state list
+terraform state show <resource_name>
+
+# Validate JSON output
+terraform show -json | jq .
+
+# GitHub Actions debugging
+# Check workflow runs:
+# https://github.com/your-username/aws-infra-microservices/actions
+
+# AWS resource verification
+aws ec2 describe-instances --filters "Name=tag:Project,Values=microservices"
+aws s3 ls s3://terraform-state-*
+aws dynamodb describe-table --table-name terraform-state-lock
+```
+
+## 📊 Monitoring và Alerts
+
+### CloudWatch Monitoring
+```bash
+# Tạo CloudWatch alarm cho Terraform operations
+aws cloudwatch put-metric-alarm \
+  --alarm-name "Terraform-State-Lock-Alert" \
+  --alarm-description "Alert khi state lock quá lâu" \
+  --metric-name ItemCount \
+  --namespace AWS/DynamoDB \
+  --statistic Sum \
+  --period 300 \
+  --threshold 1 \
+  --comparison-operator GreaterThanThreshold \
+  --dimensions Name=TableName,Value=terraform-state-lock
+```
+
+### GitHub Actions Monitoring
+```bash
+# Tạo script kiểm tra GitHub Actions status
+cat > ~/check-github-actions.sh << 'EOF'
+#!/bin/bash
+echo "=== GitHub Actions Status ==="
+echo "Repository: aws-infra-microservices"
+echo "Workflow: terraform.yml"
+echo ""
+echo "🔗 Links:"
+echo "• Actions: https://github.com/your-username/aws-infra-microservices/actions"
+echo "• Workflow: https://github.com/your-username/aws-infra-microservices/actions/workflows/terraform.yml"
+echo ""
+echo "Recent commits that may trigger workflows:"
+git log --oneline -5
+EOF
+
+chmod +x ~/check-github-actions.sh
 ```
 
 ## 💡 CloudShell Tips (với sudo)
@@ -526,6 +952,8 @@ echo "Use with caution - it will destroy all resources!"
 3. **Service management**: Có thể chạy services nếu cần
 4. **File permissions**: Có thể thay đổi permissions và ownership
 5. **System configuration**: Có thể modify system configs
+6. **Persistent storage**: Sử dụng `/tmp` cho temporary files
+7. **Environment variables**: Có thể set system-wide env vars
 
 ## 🔧 Advanced Troubleshooting
 
@@ -552,6 +980,11 @@ checkov -d . --framework terraform --check CKV_AWS_20,CKV_AWS_23 --output cli
 
 # System logs
 sudo tail -f /var/log/messages
+
+# GitHub integration testing
+git remote -v
+git log --oneline -5
+git status
 ```
 
 ## 🔒 Security Enhancements (với sudo)
@@ -571,6 +1004,71 @@ sudo mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz
 # Network security scan
 sudo yum install -y nmap
 nmap -sS localhost
+
+# Terraform security best practices
+cat > .tfsec.yml << 'EOF'
+severity_overrides:
+  CKV_AWS_20: LOW
+  CKV_AWS_23: MEDIUM
+
+exclude_checks:
+  - CKV_AWS_20  # S3 bucket ACL
+EOF
+
+# Install tfsec for additional security scanning
+curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+sudo mv tfsec /usr/local/bin/
 ```
 
-**Lưu ý**: Với quyền sudo, bạn có thể cài đặt và cấu hình nhiều tools hữu ích hơn cho việc quản lý infrastructure!
+## 🧹 Dọn dẹp
+
+### Xóa Toàn bộ Infrastructure
+```bash
+# Sử dụng script đã tạo
+~/cleanup-infra.sh
+
+# Hoặc thực hiện thủ công:
+
+# 1. Destroy Terraform resources
+cd ~/projects/aws-infra-microservices/terraform
+terraform destroy -var-file="terraform.tfvars" -auto-approve
+
+# 2. Clean up S3 bucket
+BUCKET_NAME=$(grep bucket main.tf | cut -d'"' -f4)
+aws s3 rm s3://$BUCKET_NAME --recursive
+aws s3 rb s3://$BUCKET_NAME
+
+# 3. Delete DynamoDB table
+aws dynamodb delete-table --table-name terraform-state-lock --region us-east-1
+
+# 4. Clean up GitHub repository (optional)
+# Manually delete from GitHub web interface
+
+# 5. Clean up local files
+rm -rf ~/projects/aws-infra-microservices
+rm ~/aws-infra-info.txt
+rm ~/quick-status.sh
+rm ~/start-terraform.sh
+rm ~/cleanup-infra.sh
+```
+
+## 📚 Tài liệu Tham khảo
+
+- [Terraform Documentation](https://www.terraform.io/docs)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+- [Checkov Documentation](https://www.checkov.io/1.Welcome/Quick%20Start.html)
+- [TFLint Documentation](https://github.com/terraform-linters/tflint)
+- [Terraform Best Practices](https://www.terraform-best-practices.com/)
+
+## 🚀 Bước tiếp theo
+
+1. **Multi-Environment Setup**: Tạo workspaces cho dev/staging/prod
+2. **Advanced Modules**: Phát triển reusable Terraform modules
+3. **Automated Testing**: Terratest cho integration testing
+4. **State Management**: Advanced state management strategies
+5. **Compliance**: Implement compliance as code với OPA
+6. **Monitoring**: Implement infrastructure monitoring với Prometheus
+7. **Documentation**: Tự động generate documentation với terraform-docs
+
+---
