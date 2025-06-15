@@ -5,18 +5,51 @@ metadata:
   labels:
     app: microservices-app
 data:
-  application.properties: |
-    server.port=8080
-    management.endpoints.web.exposure.include=health,info,metrics
-    management.endpoint.health.show-details=always
-    spring.application.name=microservices-app
+  application.yml: |
+    server:
+      port: 8080
 
-    # Database configuration (if needed)
-    # spring.datasource.url=jdbc:h2:mem:testdb
-    # spring.datasource.driver-class-name=org.h2.Driver
-    # spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+    spring:
+      application:
+        name: microservices-app
+      profiles:
+        active: kubernetes
 
-    # Logging configuration
-    logging.level.root=INFO
-    logging.level.com.example=DEBUG
-    logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      endpoint:
+        health:
+          show-details: always
+      health:
+        readiness-state:
+          enabled: true
+        liveness-state:
+          enabled: true
+      metrics:
+        export:
+          prometheus:
+            enabled: true
+
+    logging:
+      level:
+        com.example: INFO
+      pattern:
+        console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+        file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+  logback-spring.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+        <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="STDOUT" />
+        </root>
+    </configuration>

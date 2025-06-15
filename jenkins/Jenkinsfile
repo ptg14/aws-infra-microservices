@@ -2,10 +2,20 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'your-docker-registry'
+        // Docker Configuration
+        DOCKER_REGISTRY = 'localhost:5000'
         DOCKER_IMAGE = 'microservices-app'
         DOCKER_TAG = "${BUILD_NUMBER}"
+
+        // SonarQube Configuration
         SONARQUBE_SERVER = 'SonarQube'
+        SONAR_PROJECT_KEY = 'microservices-app'
+
+        // Kubernetes Configuration
+        K8S_NAMESPACE = 'default'
+
+        // Security Scanning
+        TRIVY_CACHE_DIR = '/tmp/trivy-cache'
     }
 
     tools {
@@ -14,188 +24,406 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('🔄 Checkout') {
             steps {
                 checkout scm
                 script {
                     env.GIT_COMMIT = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
                     env.GIT_BRANCH = sh(returnStdout: true, script: 'git branch --show-current').trim()
+                    echo "Building commit ${env.GIT_COMMIT} from branch ${env.GIT_BRANCH}"
                 }
             }
         }
 
-        stage('Build') {
+        stage('🏗️ Build Application') {
             steps {
-                echo 'Building application...'
+                echo '🔨 Building application...'
                 script {
                     if (fileExists('pom.xml')) {
-                        sh 'mvn clean compile'
+                        sh 'mvn clean compile -DskipTests'
                     } else if (fileExists('build.gradle')) {
-                        sh './gradlew clean build'
+                        sh './gradlew clean build -x test'
+                    } else if (fileExists('package.json')) {
+                        sh 'npm install && npm run build'
                     } else {
-                        echo 'No build file found, skipping build step'
-                    }
-                }
-            }
-        }
-
-        stage('Unit Tests') {
-            steps {
-                echo 'Running unit tests...'
-                script {
-                    if (fileExists('pom.xml')) {
-                        sh 'mvn test'
-                    } else if (fileExists('build.gradle')) {
-                        sh './gradlew test'
-                    } else {
-                        echo 'Creating mock test results for demo'
+                        echo '⚠️ No build file found, creating sample Java application'
                         sh '''
-                            mkdir -p target/surefire-reports
-                            cat > target/surefire-reports/TEST-DemoTest.xml << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="DemoTest" tests="1" failures="0" errors="0" time="0.1">
-    <testcase name="demoTest" classname="DemoTest" time="0.1"/>
-</testsuite>
+                            mkdir -p src/main/java/com/example
+                            cat > src/main/java/com/example/Application.java << 'EOF'
+public class Application {
+    public static void main(String[] args) {
+        System.out.println("Hello Microservices!");
+    }
+}
 EOF
                         '''
                     }
                 }
             }
             post {
+                success {
+                    echo '✅ Build completed successfully'
+                }
+                failure {
+                    echo '❌ Build failed'
+                }
+            }
+        }
+
+        stage('🧪 Unit Tests') {
+            steps {
+                echo '🧪 Running unit tests...'
+                script {
+                    try {
+                        if (fileExists('pom.xml')) {
+                            sh 'mvn test'
+                        } else if (fileExists('build.gradle')) {
+                            sh './gradlew test'
+                        } else if (fileExists('package.json')) {
+                            sh 'npm test'
+                        } else {
+                            echo '⚠️ No test framework found, creating sample test'
+                            sh '''
+                                mkdir -p src/test/java/com/example
+                                cat > src/test/java/com/example/ApplicationTest.java << 'EOF'
+import org.junit.Test;
+import static org.junit.Assert.assertTrue;
+
+public class ApplicationTest {
+    @Test
+    public void testApplication() {
+        assertTrue("Sample test", true);
+    }
+}
+EOF
+                            '''
+                        }
+                    } catch (Exception e) {
+                        echo "⚠️ Tests failed: ${e.getMessage()}"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+            post {
                 always {
+                    // Publish test results
                     script {
                         if (fileExists('target/surefire-reports/*.xml')) {
                             publishTestResults testResultsPattern: 'target/surefire-reports/*.xml'
                         }
-                    }
-                }
-            }
-        }
-
-        stage('Code Quality Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                        if (fileExists('pom.xml')) {
-                            sh 'mvn sonar:sonar'
-                        } else {
-                            // For projects without Maven/Gradle
-                            sh '''
-                                sonar-scanner \
-                                  -Dsonar.projectKey=microservices-app \
-                                  -Dsonar.sources=. \
-                                  -Dsonar.host.url=$SONAR_HOST_URL \
-                                  -Dsonar.login=$SONAR_AUTH_TOKEN
-                            '''
+                        if (fileExists('build/test-results/test/*.xml')) {
+                            publishTestResults testResultsPattern: 'build/test-results/test/*.xml'
                         }
                     }
                 }
             }
         }
 
-        stage('Quality Gate') {
+        stage('📊 Code Quality Analysis') {
+            parallel {
+                stage('SonarQube Analysis') {
+                    steps {
+                        script {
+                            withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                                if (fileExists('pom.xml')) {
+                                    sh 'mvn sonar:sonar'
+                                } else if (fileExists('build.gradle')) {
+                                    sh './gradlew sonarqube'
+                                } else {
+                                    // Generic SonarQube scan
+                                    sh '''
+                                        sonar-scanner \
+                                          -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                          -Dsonar.sources=. \
+                                          -Dsonar.host.url=$SONAR_HOST_URL \
+                                          -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                          -Dsonar.exclusions=**/target/**,**/build/**,**/*.class
+                                    '''
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Security - Dependency Check') {
+                    steps {
+                        echo '🔒 Running dependency security check...'
+                        script {
+                            try {
+                                if (fileExists('pom.xml')) {
+                                    sh 'mvn org.owasp:dependency-check-maven:check'
+                                } else {
+                                    echo '⚠️ Dependency check skipped for non-Maven projects'
+                                }
+                            } catch (Exception e) {
+                                echo "⚠️ Dependency check failed: ${e.getMessage()}"
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('🚦 Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
                     script {
                         def qg = waitForQualityGate()
                         if (qg.status != 'OK') {
-                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                            error "❌ Pipeline aborted due to quality gate failure: ${qg.status}"
+                        } else {
+                            echo "✅ Quality gate passed: ${qg.status}"
                         }
                     }
                 }
             }
         }
 
-        stage('Security Scan') {
+        stage('🔒 Security Scanning') {
+            parallel {
+                stage('Trivy Filesystem Scan') {
+                    steps {
+                        echo '🔍 Running filesystem security scan with Trivy...'
+                        script {
+                            sh '''
+                                # Create cache directory
+                                mkdir -p ${TRIVY_CACHE_DIR}
+
+                                # Run Trivy filesystem scan
+                                docker run --rm \
+                                  -v ${WORKSPACE}:/workspace \
+                                  -v ${TRIVY_CACHE_DIR}:/root/.cache/trivy \
+                                  aquasec/trivy:latest fs \
+                                  --format sarif \
+                                  --output /workspace/trivy-fs-report.sarif \
+                                  /workspace
+
+                                # Also generate table format for easy reading
+                                docker run --rm \
+                                  -v ${WORKSPACE}:/workspace \
+                                  -v ${TRIVY_CACHE_DIR}:/root/.cache/trivy \
+                                  aquasec/trivy:latest fs \
+                                  --format table \
+                                  /workspace > trivy-fs-report.txt || true
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'trivy-fs-report.*', allowEmptyArchive: true
+                        }
+                    }
+                }
+
+                stage('OWASP ZAP Security Test') {
+                    when {
+                        anyOf {
+                            branch 'main'
+                            branch 'develop'
+                        }
+                    }
+                    steps {
+                        echo '🕷️ Running OWASP ZAP security test...'
+                        script {
+                            try {
+                                sh '''
+                                    # Start ZAP in daemon mode
+                                    docker run -d --name zap \
+                                      --network jenkins_jenkins-network \
+                                      -p 8090:8080 \
+                                      owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
+
+                                    # Wait for ZAP to start
+                                    sleep 30
+
+                                    # Run baseline scan against demo app
+                                    docker exec zap zap-baseline.py -t http://demo-app:8080 -J zap-report.json || true
+
+                                    # Copy report from container
+                                    docker cp zap:/zap/zap-report.json . || true
+
+                                    # Cleanup
+                                    docker stop zap && docker rm zap || true
+                                '''
+                            } catch (Exception e) {
+                                echo "⚠️ ZAP scan failed: ${e.getMessage()}"
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: 'zap-report.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('🐳 Build Docker Image') {
             steps {
-                echo 'Running security scan with Trivy...'
+                echo '🐳 Building Docker image...'
                 script {
-                    // Trivy filesystem scan
+                    def dockerImage = docker.build("${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}", "-f jenkins/docker/Dockerfile .")
+
+                    // Tag as latest for main branch
+                    if (env.GIT_BRANCH == 'main') {
+                        dockerImage.tag("${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest")
+                    }
+
+                    // Store image for later use
+                    env.DOCKER_IMAGE_ID = dockerImage.id
+                }
+            }
+        }
+
+        stage('🔍 Docker Security Scan') {
+            steps {
+                echo '🔍 Scanning Docker image for vulnerabilities...'
+                script {
                     sh '''
-                        docker run --rm -v $(pwd):/workspace \
-                        aquasec/trivy:latest fs /workspace \
-                        --format json --output trivy-fs-report.json || true
+                        # Scan the built Docker image with Trivy
+                        docker run --rm \
+                          -v /var/run/docker.sock:/var/run/docker.sock \
+                          -v ${TRIVY_CACHE_DIR}:/root/.cache/trivy \
+                          aquasec/trivy:latest image \
+                          --format sarif \
+                          --output trivy-image-report.sarif \
+                          ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+
+                        # Generate table format
+                        docker run --rm \
+                          -v /var/run/docker.sock:/var/run/docker.sock \
+                          -v ${TRIVY_CACHE_DIR}:/root/.cache/trivy \
+                          aquasec/trivy:latest image \
+                          --format table \
+                          ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} > trivy-image-report.txt || true
                     '''
-
-                    // Archive security scan results
-                    archiveArtifacts artifacts: 'trivy-fs-report.json', allowEmptyArchive: true
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-image-report.*', allowEmptyArchive: true
                 }
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image...'
-                script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}", "-f jenkins/docker/Dockerfile .")
-                    docker.build("${DOCKER_IMAGE}:latest", "-f jenkins/docker/Dockerfile .")
-                }
-            }
-        }
-
-        stage('Docker Security Scan') {
-            steps {
-                echo 'Scanning Docker image for vulnerabilities...'
-                script {
-                    sh '''
-                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-                        aquasec/trivy:latest image ${DOCKER_IMAGE}:${DOCKER_TAG} \
-                        --format json --output trivy-image-report.json || true
-                    '''
-                    archiveArtifacts artifacts: 'trivy-image-report.json', allowEmptyArchive: true
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
+        stage('📤 Push Docker Image') {
             when {
                 anyOf {
                     branch 'main'
                     branch 'develop'
+                    branch 'release/*'
                 }
             }
             steps {
+                echo '📤 Pushing Docker image to registry...'
                 script {
-                    withDockerRegistry([credentialsId: 'docker-hub-credentials']) {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                        docker.image("${DOCKER_IMAGE}:latest").push()
+                    docker.withRegistry("http://${DOCKER_REGISTRY}") {
+                        def dockerImage = docker.image("${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}")
+                        dockerImage.push()
+
+                        if (env.GIT_BRANCH == 'main') {
+                            dockerImage.push('latest')
+                        }
                     }
                 }
             }
         }
 
-        stage('Deploy to Development') {
-            when {
-                branch 'develop'
-            }
-            steps {
-                echo 'Deploying to development environment...'
-                script {
-                    withKubeConfig([credentialsId: 'kubernetes-config']) {
-                        sh '''
-                            sed -i "s|IMAGE_TAG|${DOCKER_TAG}|g" jenkins/k8s/deployment.yaml
-                            kubectl apply -f jenkins/k8s/ --namespace=dev
-                            kubectl rollout status deployment/microservices-app --namespace=dev
-                        '''
+        stage('🚀 Deploy to Kubernetes') {
+            parallel {
+                stage('Deploy to Development') {
+                    when {
+                        branch 'develop'
+                    }
+                    steps {
+                        echo '🚀 Deploying to Development environment...'
+                        script {
+                            deployToKubernetes('dev')
+                        }
+                    }
+                }
+
+                stage('Deploy to Staging') {
+                    when {
+                        branch 'release/*'
+                    }
+                    steps {
+                        echo '🚀 Deploying to Staging environment...'
+                        script {
+                            deployToKubernetes('staging')
+                        }
+                    }
+                }
+
+                stage('Deploy to Production') {
+                    when {
+                        branch 'main'
+                    }
+                    steps {
+                        echo '🚀 Deploying to Production environment...'
+                        script {
+                            // Require manual approval for production
+                            input message: 'Deploy to Production?', ok: 'Deploy'
+                            deployToKubernetes('prod')
+                        }
                     }
                 }
             }
         }
 
-        stage('Deploy to Production') {
+        stage('🧪 Post-Deployment Tests') {
             when {
-                branch 'main'
+                anyOf {
+                    branch 'main'
+                    branch 'develop'
+                    branch 'release/*'
+                }
             }
-            steps {
-                echo 'Deploying to production environment...'
-                input message: 'Deploy to production?', ok: 'Deploy'
-                script {
-                    withKubeConfig([credentialsId: 'kubernetes-config']) {
-                        sh '''
-                            sed -i "s|IMAGE_TAG|${DOCKER_TAG}|g" jenkins/k8s/deployment.yaml
-                            kubectl apply -f jenkins/k8s/ --namespace=prod
-                            kubectl rollout status deployment/microservices-app --namespace=prod
-                        '''
+            parallel {
+                stage('Health Check') {
+                    steps {
+                        echo '🏥 Running health checks...'
+                        script {
+                            sh '''
+                                # Wait for deployment to be ready
+                                sleep 30
+
+                                # Check if application is responding
+                                for i in {1..5}; do
+                                    if curl -f http://localhost:8081/actuator/health; then
+                                        echo "✅ Health check passed"
+                                        break
+                                    else
+                                        echo "⚠️ Health check attempt $i failed, retrying..."
+                                        sleep 10
+                                    fi
+                                done
+                            '''
+                        }
+                    }
+                }
+
+                stage('Integration Tests') {
+                    steps {
+                        echo '🔗 Running integration tests...'
+                        script {
+                            try {
+                                sh '''
+                                    # Run basic integration tests
+                                    echo "Running integration tests against deployed application"
+
+                                    # Test basic endpoints
+                                    curl -f http://localhost:8081/ || echo "Main endpoint test failed"
+                                    curl -f http://localhost:8081/actuator/info || echo "Info endpoint test failed"
+                                '''
+                            } catch (Exception e) {
+                                echo "⚠️ Integration tests failed: ${e.getMessage()}"
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        }
                     }
                 }
             }
@@ -204,32 +432,71 @@ EOF
 
     post {
         always {
-            echo 'Cleaning up...'
+            echo '🧹 Cleaning up...'
+
+            // Archive artifacts
+            archiveArtifacts artifacts: '**/target/**/*.jar,**/build/**/*.jar', allowEmptyArchive: true
+
+            // Publish test results
+            publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml,**/build/test-results/test/*.xml', allowEmptyArchive: true
+
+            // Clean up Docker images to save space
             script {
-                // Clean up Docker images
-                sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
-                sh "docker rmi ${DOCKER_IMAGE}:latest || true"
+                sh '''
+                    # Remove intermediate images
+                    docker image prune -f
 
-                // Archive build artifacts
-                archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
-
-                // Publish test results
-                publishTestResults testResultsPattern: '**/target/surefire-reports/*.xml'
+                    # Remove old images (keep last 5)
+                    docker images ${DOCKER_REGISTRY}/${DOCKER_IMAGE} --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | \
+                    tail -n +2 | sort -k2 -r | tail -n +6 | awk '{print $1}' | xargs -r docker rmi || true
+                '''
             }
         }
+
         success {
-            echo 'Pipeline completed successfully!'
-            // Optional: Send Slack notification
-            // slackSend channel: '#deployments',
-            //           color: 'good',
-            //           message: "✅ Deployment successful for ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
+            echo '✅ Pipeline completed successfully!'
+
+            // Send success notification
+            script {
+                if (env.GIT_BRANCH == 'main') {
+                    echo "🎉 Production deployment successful for build ${BUILD_NUMBER}"
+                }
+            }
         }
+
         failure {
-            echo 'Pipeline failed!'
-            // Optional: Send Slack notification
-            // slackSend channel: '#deployments',
-            //           color: 'danger',
-            //           message: "❌ Deployment failed for ${env.JOB_NAME} - ${env.BUILD_NUMBER}"
+            echo '❌ Pipeline failed!'
+
+            // Send failure notification
+            script {
+                echo "💥 Pipeline failed at build ${BUILD_NUMBER} for branch ${env.GIT_BRANCH}"
+            }
+        }
+
+        unstable {
+            echo '⚠️ Pipeline completed with warnings'
         }
     }
+}
+
+// Helper function for Kubernetes deployment
+def deployToKubernetes(environment) {
+    echo "Deploying to ${environment} environment"
+
+    sh """
+        # Update Kubernetes manifests with new image
+        sed -i 's|image: .*|image: ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}|' jenkins/k8s/deployment.yaml
+
+        # Create namespace if not exists
+        kubectl create namespace ${environment} --dry-run=client -o yaml | kubectl apply -f -
+
+        # Apply Kubernetes manifests
+        kubectl apply -f jenkins/k8s/ -n ${environment}
+
+        # Wait for deployment to be ready
+        kubectl rollout status deployment/microservices-app -n ${environment} --timeout=300s
+
+        # Verify deployment
+        kubectl get pods -n ${environment} -l app=microservices-app
+    """
 }

@@ -18,8 +18,7 @@ spec:
     spec:
       containers:
       - name: microservices-app
-        image: microservices-app:IMAGE_TAG
-        imagePullPolicy: Always
+        image: localhost:5000/microservices-app:latest
         ports:
         - containerPort: 8080
           name: http
@@ -39,20 +38,25 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness
             port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
 ---
 apiVersion: v1
 kind: Service
@@ -75,7 +79,6 @@ kind: Ingress
 metadata:
   name: microservices-app-ingress
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:

@@ -1,16 +1,20 @@
 #!/bin/bash
 
-echo "=== Setting up Jenkins CI/CD Environment ==="
+set -e
 
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to print colored output
 print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
 print_warning() {
@@ -21,91 +25,110 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if Docker is installed
-if ! command -v docker &> /dev/null; then
-    print_error "Docker is not installed. Please install Docker first."
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    print_error "Docker is not running. Please start Docker and try again."
     exit 1
 fi
 
-# Check if Docker Compose is installed
+# Check if Docker Compose is available
 if ! command -v docker-compose &> /dev/null; then
-    print_error "Docker Compose is not installed. Please install Docker Compose first."
+    print_error "Docker Compose is not installed. Please install Docker Compose and try again."
     exit 1
 fi
+
+print_status "Setting up Jenkins CI/CD environment for microservices..."
 
 # Create necessary directories
-print_status "Creating necessary directories..."
-mkdir -p jenkins/plugins
-mkdir -p jenkins/k8s
-mkdir -p scripts
-mkdir -p src/main/java
-mkdir -p src/test/java
+print_status "Creating directory structure..."
+mkdir -p jenkins/{data,scripts,k8s,docker}
+mkdir -p src/{main,test}/java/com/example
 mkdir -p target/surefire-reports
+mkdir -p .jenkins
 
-# Start services
-print_status "Starting Jenkins and SonarQube services..."
-docker-compose up -d
+# Create sample Java application if not exists
+if [ ! -f "src/main/java/com/example/Application.java" ]; then
+    print_status "Creating sample Java application..."
+    cat > src/main/java/com/example/Application.java << 'EOF'
+package com.example;
 
-# Wait for Jenkins to start
-print_status "Waiting for Jenkins to start..."
-sleep 30
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.stereotype.Component;
 
-# Get Jenkins initial admin password
-if docker exec jenkins test -f /var/jenkins_home/secrets/initialAdminPassword; then
-    JENKINS_PASSWORD=$(docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null)
-    print_status "Jenkins Initial Admin Password: $JENKINS_PASSWORD"
-else
-    print_warning "Could not retrieve Jenkins password. Check manually with: docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword"
-fi
-
-# Create sample application files if they don't exist
-if [ ! -f "src/main/java/DemoApp.java" ]; then
-    print_status "Creating sample application..."
-    cat > src/main/java/DemoApp.java << 'EOF'
-public class DemoApp {
+@SpringBootApplication
+public class Application {
     public static void main(String[] args) {
-        System.out.println("Demo Microservice is running!");
-        // Keep the application running
-        try {
-            Thread.sleep(Long.MAX_VALUE);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+@RestController
+class HelloController {
+    @GetMapping("/")
+    public String hello() {
+        return "Hello Microservices World!";
+    }
+
+    @GetMapping("/version")
+    public String version() {
+        return "Version 1.0.0";
+    }
+}
+
+@Component
+class CustomHealthIndicator implements HealthIndicator {
+    @Override
+    public Health health() {
+        return Health.up()
+            .withDetail("service", "microservices-app")
+            .withDetail("status", "running")
+            .build();
     }
 }
 EOF
 fi
 
-# Create sample test file
-if [ ! -f "src/test/java/DemoAppTest.java" ]; then
+# Create sample test if not exists
+if [ ! -f "src/test/java/com/example/ApplicationTest.java" ]; then
     print_status "Creating sample test..."
-    cat > src/test/java/DemoAppTest.java << 'EOF'
-import org.junit.Test;
-import static org.junit.Assert.*;
+    cat > src/test/java/com/example/ApplicationTest.java << 'EOF'
+package com.example;
 
-public class DemoAppTest {
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@SpringBootTest
+@SpringJUnitConfig
+public class ApplicationTest {
+
     @Test
-    public void testDemo() {
-        assertTrue("Demo test should pass", true);
+    public void contextLoads() {
+        assertTrue(true, "Application context should load successfully");
     }
 
     @Test
-    public void testAnother() {
-        assertEquals("Expected value", "Expected value", "Expected value");
+    public void testApplication() {
+        assertTrue(true, "Sample test should pass");
     }
 }
 EOF
 fi
 
-# Create basic pom.xml if it doesn't exist
+# Create pom.xml if not exists
 if [ ! -f "pom.xml" ]; then
-    print_status "Creating basic pom.xml..."
+    print_status "Creating Maven POM file..."
     cat > pom.xml << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
@@ -113,21 +136,40 @@ if [ ! -f "pom.xml" ]; then
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Microservices Demo Application</name>
-    <description>Demo application for Jenkins CI/CD pipeline</description>
+    <name>Microservices Application</name>
+    <description>Demo microservices application for CI/CD pipeline</description>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <spring.boot.version>2.7.0</spring.boot.version>
+        <junit.version>5.8.2</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <junit.version>4.13.2</junit.version>
-        <jacoco.version>0.8.7</jacoco.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
@@ -136,19 +178,22 @@ if [ ! -f "pom.xml" ]; then
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                </configuration>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <version>3.0.0-M7</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
@@ -160,7 +205,7 @@ if [ ! -f "pom.xml" ]; then
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.version}</version>
+                <version>0.8.7</version>
                 <executions>
                     <execution>
                         <goals>
@@ -182,19 +227,89 @@ if [ ! -f "pom.xml" ]; then
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
             </plugin>
+
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>7.1.1</version>
+                <configuration>
+                    <format>ALL</format>
+                    <outputDirectory>target/dependency-check</outputDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
 EOF
 fi
 
-print_status "Setup completed!"
-print_status "Access Jenkins at: http://localhost:8080"
-print_status "Access SonarQube at: http://localhost:9000 (admin/admin)"
-print_status ""
-print_status "Next steps:"
-print_status "1. Configure Jenkins with the initial admin password"
-print_status "2. Install required plugins in Jenkins"
-print_status "3. Configure SonarQube token in Jenkins"
-print_status "4. Set up Docker Hub credentials in Jenkins"
-print_status "5. Create the Jenkins pipeline job"
+# Pull required Docker images
+print_status "Pulling Docker images..."
+docker-compose -f jenkins/docker-compose.yml pull
+
+# Start services
+print_status "Starting Jenkins and related services..."
+docker-compose -f jenkins/docker-compose.yml up -d
+
+# Wait for services to start
+print_status "Waiting for services to start..."
+sleep 60
+
+# Check Jenkins status
+print_status "Checking Jenkins status..."
+if curl -f http://localhost:8080 > /dev/null 2>&1; then
+    print_success "Jenkins is running at http://localhost:8080"
+else
+    print_warning "Jenkins may still be starting. Please wait a few more minutes."
+fi
+
+# Get Jenkins initial admin password
+if docker exec jenkins test -f /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null; then
+    JENKINS_PASSWORD=$(docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword 2>/dev/null)
+    print_success "Jenkins Initial Admin Password: ${JENKINS_PASSWORD}"
+else
+    print_warning "Could not retrieve Jenkins password. Check manually with:"
+    echo "docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword"
+fi
+
+# Check SonarQube status
+print_status "Checking SonarQube status..."
+sleep 30
+if curl -f http://localhost:9000 > /dev/null 2>&1; then
+    print_success "SonarQube is running at http://localhost:9000"
+    print_status "Default SonarQube credentials: admin/admin"
+else
+    print_warning "SonarQube may still be starting. Please wait a few more minutes."
+fi
+
+# Check demo application
+print_status "Checking demo application..."
+if curl -f http://localhost:8081 > /dev/null 2>&1; then
+    print_success "Demo application is running at http://localhost:8081"
+else
+    print_warning "Demo application may still be starting."
+fi
+
+print_success "Setup completed!"
+echo ""
+echo "=== 🚀 Jenkins CI/CD Environment ==="
+echo "Jenkins:        http://localhost:8080"
+echo "SonarQube:      http://localhost:9000 (admin/admin)"
+echo "Demo App:       http://localhost:8081"
+echo "Registry:       http://localhost:5000"
+echo ""
+echo "=== 📋 Next Steps ==="
+echo "1. Access Jenkins and complete the setup wizard"
+echo "2. Install recommended plugins + SonarQube Scanner"
+echo "3. Configure SonarQube server in Jenkins"
+echo "4. Create a new Pipeline job pointing to your Jenkinsfile"
+echo "5. Configure webhooks for automatic builds"
+echo ""
+echo "=== 🔧 Useful Commands ==="
+echo "View logs:           docker-compose -f jenkins/docker-compose.yml logs -f"
+echo "Stop services:       docker-compose -f jenkins/docker-compose.yml down"
+echo "Restart services:    docker-compose -f jenkins/docker-compose.yml restart"
+echo "Build locally:       mvn clean package"
+echo "Run tests:           mvn test"
+echo ""
+print_success "Happy coding! 🎉"

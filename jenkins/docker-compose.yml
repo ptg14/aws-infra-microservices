@@ -2,72 +2,90 @@ version: '3.8'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:2.401.3-lts
     container_name: jenkins
-    restart: unless-stopped
+    user: root
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts:/scripts
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+      - JENKINS_OPTS=--httpPort=8080
     networks:
-      - ci-cd-network
-
-  sonarqube-db:
-    image: postgres:13
-    container_name: sonarqube-db
+      - jenkins-network
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: sonar
-      POSTGRES_PASSWORD: sonar
-      POSTGRES_DB: sonarqube
-    volumes:
-      - postgresql_data:/var/lib/postgresql/data
-    networks:
-      - ci-cd-network
 
   sonarqube:
-    image: sonarqube:lts-community
+    image: sonarqube:9.9-community
     container_name: sonarqube
-    restart: unless-stopped
-    depends_on:
-      - sonarqube-db
     ports:
       - "9000:9000"
     environment:
-      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
-      SONAR_JDBC_USERNAME: sonar
-      SONAR_JDBC_PASSWORD: sonar
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar123
     volumes:
       - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
     networks:
-      - ci-cd-network
+      - jenkins-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
 
-  microservices-app:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar123
+      - POSTGRES_DB=sonar
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    networks:
+      - jenkins-network
+    restart: unless-stopped
+
+  # Demo microservice application
+  demo-app:
     build:
       context: .
-      dockerfile: jenkins/docker/Dockerfile
-    container_name: microservices-app
-    restart: unless-stopped
+      dockerfile: docker/Dockerfile
+    container_name: demo-app
     ports:
       - "8081:8080"
+    networks:
+      - jenkins-network
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  # Registry for storing Docker images (optional for local development)
+  registry:
+    image: registry:2
+    container_name: local-registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry_data:/var/lib/registry
     networks:
-      - ci-cd-network
+      - jenkins-network
+    restart: unless-stopped
 
 volumes:
   jenkins_home:
-  postgresql_data:
   sonarqube_data:
-  sonarqube_logs:
   sonarqube_extensions:
+  sonarqube_logs:
+  postgresql_data:
+  registry_data:
 
 networks:
-  ci-cd-network:
+  jenkins-network:
     driver: bridge

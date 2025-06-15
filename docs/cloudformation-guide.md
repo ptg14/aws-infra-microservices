@@ -789,5 +789,4 @@ aws iam delete-policy --policy-arn arn:aws:iam::ACCOUNT_ID:policy/CodePipelineCu
 3. **Multi-Environment**: Tạo pipelines cho dev/staging/prod
 4. **Advanced Testing**: Integration và E2E tests
 5. **Cross-Region Deployment**: Multi-region failover setup
-
 ---
