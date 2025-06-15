@@ -9,7 +9,7 @@ phases:
       - pip install --upgrade pip
       - pip install cfn-lint
       - pip install taskcat
-      - pip install aws-cli
+      - pip install awscli
       - cfn-lint --version
       - taskcat --version
 
@@ -22,27 +22,6 @@ phases:
       - echo "Running cfn-lint..."
       - cfn-lint cloudformation/infrastructure.yaml --info
       - cfn-lint cloudformation/infrastructure.yaml --format json > cfn-lint-results.json || true
-
-      # Create Taskcat config
-      - |
-        cat > .taskcat.yml << EOF
-        project:
-          name: microservices-infrastructure
-          regions:
-            - us-east-1
-            - us-west-2
-          parameters:
-            ProjectName: microservices-test
-            Environment: dev
-            VpcCidr: 10.0.0.0/16
-            InstanceType: t3.micro
-            KeyName: ""
-        tests:
-          default:
-            template: cloudformation/infrastructure.yaml
-            regions:
-              - us-east-1
-        EOF
 
       # Taskcat validation (syntax only to avoid actual deployment)
       - echo "Running Taskcat lint..."
@@ -62,29 +41,14 @@ phases:
 
       # Create parameter file for deployment
       - |
-        cat > parameters.json << EOF
-        [
-          {
-            "ParameterKey": "ProjectName",
-            "ParameterValue": "microservices"
-          },
-          {
-            "ParameterKey": "Environment",
-            "ParameterValue": "dev"
-          },
-          {
-            "ParameterKey": "VpcCidr",
-            "ParameterValue": "10.0.0.0/16"
-          },
-          {
-            "ParameterKey": "InstanceType",
-            "ParameterValue": "t3.micro"
-          },
-          {
-            "ParameterKey": "KeyName",
-            "ParameterValue": ""
-          }
-        ]
+        cat > configuration.json << EOF
+        {
+          "ProjectName": "microservices",
+          "Environment": "dev",
+          "VpcCidr": "10.0.0.0/16",
+          "InstanceType": "t3.micro",
+          "KeyName": ""
+        }
         EOF
 
   post_build:
@@ -119,7 +83,7 @@ reports:
 artifacts:
   files:
     - packaged-template.yaml
-    - parameters.json
+    - configuration.json
     - cfn-lint-results.json
     - build-report.json
     - .taskcat.yml

@@ -26,9 +26,7 @@ aws-infra-microservices/
 │   ├── infrastructure.yaml      # Template chính
 │   ├── buildspec.yml           # Build instructions
 │   └── .taskcat.yml           # TaskCat configuration
-├── docs/
-│   └── cloudformation-guide.md # File hướng dẫn này
-└── README.md
+
 ```
 
 ## 🚀 Hướng dẫn Triển khai
@@ -489,8 +487,7 @@ cat > codepipeline.json << EOF
               "ActionMode": "CREATE_UPDATE",
               "StackName": "microservices-infrastructure",
               "TemplatePath": "BuildOutput::packaged-template.yaml",
-              "ParameterOverrides": "BuildOutput::parameters.json",
-              "Capabilities": "CAPABILITY_IAM",
+              "Capabilities": "CAPABILITY_NAMED_IAM",
               "RoleArn": "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):role/CloudFormationServiceRole"
             },
             "inputArtifacts": [

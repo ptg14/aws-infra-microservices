@@ -327,10 +327,6 @@ Resources:
             VolumeSize: 20
             DeleteOnTermination: true
             Encrypted: true
-      MetadataOptions:
-        HttpEndpoint: enabled
-        HttpTokens: required
-        HttpPutResponseHopLimit: 1
       Monitoring: true
       Tags:
         - Key: Name
@@ -369,10 +365,6 @@ Resources:
             VolumeSize: 20
             DeleteOnTermination: true
             Encrypted: true
-      MetadataOptions:
-        HttpEndpoint: enabled
-        HttpTokens: required
-        HttpPutResponseHopLimit: 1
       Monitoring: true
       Tags:
         - Key: Name
@@ -407,10 +399,6 @@ Resources:
             VolumeSize: 20
             DeleteOnTermination: true
             Encrypted: true
-      MetadataOptions:
-        HttpEndpoint: enabled
-        HttpTokens: required
-        HttpPutResponseHopLimit: 1
       Monitoring: true
       Tags:
         - Key: Name
@@ -445,10 +433,6 @@ Resources:
             VolumeSize: 20
             DeleteOnTermination: true
             Encrypted: true
-      MetadataOptions:
-        HttpEndpoint: enabled
-        HttpTokens: required
-        HttpPutResponseHopLimit: 1
       Monitoring: true
       Tags:
         - Key: Name
@@ -464,6 +448,7 @@ Resources:
   EC2Role:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ${ProjectName}-${Environment}-EC2Role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -478,12 +463,19 @@ Resources:
           Value: !Ref ProjectName
         - Key: Environment
           Value: !Ref Environment
+    # Add deletion policy to retain role if needed
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
 
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
+      InstanceProfileName: !Sub ${ProjectName}-${Environment}-EC2InstanceProfile
       Roles:
         - !Ref EC2Role
+    # Ensure proper deletion order
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
 
 Outputs:
   VPCId:
