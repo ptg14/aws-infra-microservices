@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "terraform-state-1749828147-cloudshell-user"
+    bucket         = "terraform-state-1750009402-cloudshell-user"
     key            = "microservices/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-lock"
