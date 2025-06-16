@@ -243,6 +243,9 @@ if [ ! -f "pom.xml" ]; then
 EOF
 fi
 
+# Copy sample test
+cp -r src jenkins/
+
 # Pull required Docker images
 print_status "Pulling Docker images..."
 docker-compose -f jenkins/docker-compose.yml pull
@@ -257,8 +260,8 @@ sleep 60
 
 # Check Jenkins status
 print_status "Checking Jenkins status..."
-if curl -f http://localhost:8080 > /dev/null 2>&1; then
-    print_success "Jenkins is running at http://localhost:8080"
+if curl -f http://localhost:8000 > /dev/null 2>&1; then
+    print_success "Jenkins is running at http://localhost:8000"
 else
     print_warning "Jenkins may still be starting. Please wait a few more minutes."
 fi
@@ -284,8 +287,8 @@ fi
 
 # Check demo application
 print_status "Checking demo application..."
-if curl -f http://localhost:8081 > /dev/null 2>&1; then
-    print_success "Demo application is running at http://localhost:8081"
+if curl -f http://localhost:3000 > /dev/null 2>&1; then
+    print_success "Demo application is running at http://localhost:3000"
 else
     print_warning "Demo application may still be starting."
 fi
@@ -293,9 +296,9 @@ fi
 print_success "Setup completed!"
 echo ""
 echo "=== 🚀 Jenkins CI/CD Environment ==="
-echo "Jenkins:        http://localhost:8080"
+echo "Jenkins:        http://localhost:8000"
 echo "SonarQube:      http://localhost:9000 (admin/admin)"
-echo "Demo App:       http://localhost:8081"
+echo "Demo App:       http://localhost:3000"
 echo "Registry:       http://localhost:5000"
 echo ""
 echo "=== 📋 Next Steps ==="

@@ -98,13 +98,13 @@ docker-compose -f jenkins/docker-compose.yml ps
 #### 2.3 Truy cập các services
 ```bash
 # Kiểm tra Jenkins (có thể mất vài phút để khởi động)
-curl -f http://localhost:8080 || echo "Jenkins đang khởi động..."
+curl -f http://localhost:8000 || echo "Jenkins đang khởi động..."
 
 # Kiểm tra SonarQube
 curl -f http://localhost:9000 || echo "SonarQube đang khởi động..."
 
 # Kiểm tra Demo App
-curl -f http://localhost:8081 || echo "Demo app đang khởi động..."
+curl -f http://localhost:3000 || echo "Demo app đang khởi động..."
 ```
 
 ### Bước 3: Cấu hình Jenkins
@@ -114,7 +114,7 @@ curl -f http://localhost:8081 || echo "Demo app đang khởi động..."
 # Lấy initial admin password
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
-echo "Truy cập http://localhost:8080 và sử dụng password trên"
+echo "Truy cập http://localhost:8000 và sử dụng password trên"
 ```
 
 #### 3.2 Cài đặt Plugins cần thiết
@@ -268,7 +268,7 @@ kubectl get namespaces
 ```bash
 echo "Trong GitHub repository:"
 echo "1. Settings → Webhooks → Add webhook"
-echo "2. Payload URL: http://your-jenkins-url:8080/github-webhook/"
+echo "2. Payload URL: http://your-jenkins-url:8000/github-webhook/"
 echo "3. Content type: application/json"
 echo "4. Events: Push events, Pull request events"
 ```
@@ -435,12 +435,12 @@ docker volume prune -f
 cat > ~/monitor-jenkins.sh << 'EOF'
 #!/bin/bash
 echo "=== Jenkins System Status ==="
-echo "Jenkins URL: http://localhost:8080"
-echo "Status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)"
+echo "Jenkins URL: http://localhost:8000"
+echo "Status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000)"
 
 echo -e "\n=== Recent Builds ==="
 # Sử dụng Jenkins CLI hoặc REST API để lấy build status
-curl -s "http://localhost:8080/api/json?tree=jobs[name,lastBuild[number,result,timestamp]]" | \
+curl -s "http://localhost:8000/api/json?tree=jobs[name,lastBuild[number,result,timestamp]]" | \
   jq -r '.jobs[] | "\(.name): Build #\(.lastBuild.number) - \(.lastBuild.result)"'
 
 echo -e "\n=== System Resources ==="
@@ -470,7 +470,7 @@ curl -s "http://localhost:9000/api/qualitygates/project_status?projectKey=micros
 # Simple email notification script
 cat > ~/jenkins-alerts.sh << 'EOF'
 #!/bin/bash
-JENKINS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)
+JENKINS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000)
 SONAR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000)
 
 if [ $JENKINS_STATUS -ne 200 ]; then

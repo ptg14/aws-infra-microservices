@@ -231,14 +231,14 @@ EOF
                                     # Start ZAP in daemon mode
                                     docker run -d --name zap \
                                       --network jenkins_jenkins-network \
-                                      -p 8090:8080 \
+                                      -p 6000:8080 \
                                       owasp/zap2docker-stable zap.sh -daemon -host 0.0.0.0 -port 8080
 
                                     # Wait for ZAP to start
                                     sleep 30
 
                                     # Run baseline scan against demo app
-                                    docker exec zap zap-baseline.py -t http://demo-app:8080 -J zap-report.json || true
+                                    docker exec zap zap-baseline.py -t http://demo-app:3000 -J zap-report.json || true
 
                                     # Copy report from container
                                     docker cp zap:/zap/zap-report.json . || true
@@ -393,7 +393,7 @@ EOF
 
                                 # Check if application is responding
                                 for i in {1..5}; do
-                                    if curl -f http://localhost:8081/actuator/health; then
+                                    if curl -f http://localhost:3000/actuator/health; then
                                         echo "✅ Health check passed"
                                         break
                                     else
@@ -416,8 +416,8 @@ EOF
                                     echo "Running integration tests against deployed application"
 
                                     # Test basic endpoints
-                                    curl -f http://localhost:8081/ || echo "Main endpoint test failed"
-                                    curl -f http://localhost:8081/actuator/info || echo "Info endpoint test failed"
+                                    curl -f http://localhost:3000/ || echo "Main endpoint test failed"
+                                    curl -f http://localhost:3000/actuator/info || echo "Info endpoint test failed"
                                 '''
                             } catch (Exception e) {
                                 echo "⚠️ Integration tests failed: ${e.getMessage()}"
