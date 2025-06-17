@@ -91,7 +91,7 @@ jobs:
         directory: terraform
         framework: terraform
         output_format: cli,json
-        output_file_path: reports/results.json
+        output_file_path: reports/results_json.json
         download_external_modules: true
         quiet: true
         soft_fail: true
@@ -110,14 +110,14 @@ jobs:
     - name: Parse Checkov JSON Results
       id: parse_checkov
       run: |
-        if [ -f "reports/results.json" ]; then
+        if [ -f "reports/results_json.json" ]; then
           echo "JSON_EXISTS=true" >> $GITHUB_ENV
-          echo "JSON_PATH=reports/results.json" >> $GITHUB_ENV
+          echo "JSON_PATH=reports/results_json.json" >> $GITHUB_ENV
 
           # Parse JSON results
-          PASSED_CHECKS=$(jq -r '.summary.passed' reports/results.json 2>/dev/null || echo "0")
-          FAILED_CHECKS=$(jq -r '.summary.failed' reports/results.json 2>/dev/null || echo "0")
-          SKIPPED_CHECKS=$(jq -r '.summary.skipped' reports/results.json 2>/dev/null || echo "0")
+          PASSED_CHECKS=$(jq -r '.summary.passed' reports/results_json.json 2>/dev/null || echo "0")
+          FAILED_CHECKS=$(jq -r '.summary.failed' reports/results_json.json 2>/dev/null || echo "0")
+          SKIPPED_CHECKS=$(jq -r '.summary.skipped' reports/results_json.json 2>/dev/null || echo "0")
 
           echo "PASSED_CHECKS=$PASSED_CHECKS" >> $GITHUB_ENV
           echo "FAILED_CHECKS=$FAILED_CHECKS" >> $GITHUB_ENV
@@ -150,7 +150,7 @@ jobs:
           if [ "${{ env.FAILED_CHECKS }}" != "0" ]; then
             echo "### Failed Checks Details" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            jq -r '.results.failed_checks[] | "- " + .check_id + ": " + .check_name + " (" + .file_path + ")"' reports/results.json | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse failed checks" >> $GITHUB_STEP_SUMMARY
+            jq -r '.results.failed_checks[] | "- " + .check_id + ": " + .check_name + " (" + .file_path + ")"' reports/results_json.json | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse failed checks" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
             if [ "${{ env.FAILED_CHECKS }}" -gt "10" ]; then
@@ -176,7 +176,7 @@ jobs:
       with:
         name: checkov-results
         path: |
-          reports/results.json
+          reports/results_json.json
           reports/results_cli.txt
         retention-days: 30
 
