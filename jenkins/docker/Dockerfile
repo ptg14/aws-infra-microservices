@@ -1,5 +1,5 @@
 # Multi-stage build for Java application
-FROM maven:3.6.3-openjdk-17 AS build
+FROM maven:3.8.4-openjdk-11 AS build
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ RUN if [ -f pom.xml ]; then \
     fi
 
 # Runtime stage
-FROM openjdk:17-jre-slim
+FROM openjdk:11-jre-slim
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
