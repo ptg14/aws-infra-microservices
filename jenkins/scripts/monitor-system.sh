@@ -56,7 +56,7 @@ draw_architecture() {
     echo -e "${CYAN}"
     cat << 'EOF'
     ╔═══════════════════════════════════════════════════════════════════════════════╗
-    ║                              JENKINS CI/CD PIPELINE                           ║
+    ║                              JENKINS CI/CD PIPELINE                        ║
     ╚═══════════════════════════════════════════════════════════════════════════════╝
 
          ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -171,9 +171,9 @@ show_security_status() {
     echo "┌─────────────────────┬─────────────┬─────────────┬─────────────┐"
     echo "│ Scan Type           │ Critical    │ High        │ Status      │"
     echo "├─────────────────────┼─────────────┼─────────────┼─────────────┤"
-    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "Trivy (Image)" "0" "2" "⚠️  WARNING"
-    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "OWASP Dependency" "1" "3" "❌ FAILED"
-    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "ZAP (Web Scan)" "0" "0" "✅ PASSED"
+    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "Trivy (Image)" "0" "2" "⚠️  WARNING "
+    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "OWASP Dependency" "1" "3" "❌ FAILED  "
+    printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "ZAP (Web Scan)" "0" "0" "✅ PASSED  "
     echo "└─────────────────────┴─────────────┴─────────────┴─────────────┘"
 }
 
@@ -185,9 +185,9 @@ show_deployment_status() {
         echo "┌─────────────────────┬─────────────┬─────────────┬─────────────┐"
         echo "│ Environment         │ Replicas    │ Available   │ Status      │"
         echo "├─────────────────────┼─────────────┼─────────────┼─────────────┤"
-        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "dev" "2/2" "2" "✅ RUNNING"
-        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "staging" "3/3" "3" "✅ RUNNING"
-        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "prod" "5/5" "5" "✅ RUNNING"
+        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "dev" "2/2" "2" "✅ RUNNING  "
+        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "staging" "3/3" "3" "✅ RUNNING  "
+        printf "│ %-19s │ %-11s │ %-11s │ %-11s │\n" "prod" "5/5" "5" "✅ RUNNING  "
         echo "└─────────────────────┴─────────────┴─────────────┴─────────────┘"
     else
         echo -e "${YELLOW}⚠️  kubectl not available - Docker deployments only${NC}"
