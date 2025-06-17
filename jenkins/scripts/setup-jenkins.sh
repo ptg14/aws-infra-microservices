@@ -43,7 +43,7 @@ print_status "Setting up Jenkins CI/CD environment for microservices..."
 print_status "Creating directory structure..."
 mkdir -p jenkins/{data,html}
 mkdir -p jenkins/src/{main,test}/java/com/example
-mkdir -p src/main/resources
+mkdir -p jenkins/src/main/resources
 mkdir -p target/surefire-reports
 mkdir -p .jenkins
 
