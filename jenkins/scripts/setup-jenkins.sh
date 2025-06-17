@@ -41,15 +41,16 @@ print_status "Setting up Jenkins CI/CD environment for microservices..."
 
 # Create necessary directories
 print_status "Creating directory structure..."
-mkdir -p jenkins/{data,scripts,k8s,docker}
-mkdir -p src/{main,test}/java/com/example
+mkdir -p jenkins/{data,html}
+mkdir -p jenkins/src/{main,test}/java/com/example
+mkdir -p src/main/resources
 mkdir -p target/surefire-reports
 mkdir -p .jenkins
 
 # Create sample Java application if not exists
-if [ ! -f "src/main/java/com/example/Application.java" ]; then
+if [ ! -f "jenkins/src/main/java/com/example/Application.java" ]; then
     print_status "Creating sample Java application..."
-    cat > src/main/java/com/example/Application.java << 'EOF'
+    cat > jenkins/src/main/java/com/example/Application.java << 'EOF'
 package com.example;
 
 import org.springframework.boot.SpringApplication;
@@ -71,12 +72,27 @@ public class Application {
 class HelloController {
     @GetMapping("/")
     public String hello() {
-        return "Hello Microservices World!";
+        return "Hello Microservices World! Application is running successfully on port 8080";
     }
 
     @GetMapping("/version")
     public String version() {
-        return "Version 1.0.0";
+        return "Version 1.0.0 - Build " + System.currentTimeMillis();
+    }
+
+    @GetMapping("/health")
+    public String health() {
+        return "Application is healthy and running!";
+    }
+
+    @GetMapping("/api/status")
+    public Object status() {
+        return new Object() {
+            public String status = "UP";
+            public String application = "microservices-demo";
+            public String version = "1.0.0";
+            public long timestamp = System.currentTimeMillis();
+        };
     }
 }
 
@@ -87,6 +103,8 @@ class CustomHealthIndicator implements HealthIndicator {
         return Health.up()
             .withDetail("service", "microservices-app")
             .withDetail("status", "running")
+            .withDetail("port", "8080")
+            .withDetail("profiles", System.getProperty("spring.profiles.active", "default"))
             .build();
     }
 }
@@ -94,19 +112,25 @@ EOF
 fi
 
 # Create sample test if not exists
-if [ ! -f "src/test/java/com/example/ApplicationTest.java" ]; then
+if [ ! -f "jenkins/src/test/java/com/example/ApplicationTest.java" ]; then
     print_status "Creating sample test..."
-    cat > src/test/java/com/example/ApplicationTest.java << 'EOF'
+    cat > jenkins/src/test/java/com/example/ApplicationTest.java << 'EOF'
 package com.example;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @SpringJUnitConfig
 public class ApplicationTest {
+
+    @LocalServerPort
+    private int port;
 
     @Test
     public void contextLoads() {
@@ -114,21 +138,41 @@ public class ApplicationTest {
     }
 
     @Test
-    public void testApplication() {
-        assertTrue(true, "Sample test should pass");
+    public void testMainEndpoint() {
+        TestRestTemplate restTemplate = new TestRestTemplate();
+        String response = restTemplate.getForObject("http://localhost:" + port + "/", String.class);
+        assertNotNull(response);
+        assertTrue(response.contains("Hello Microservices World!"));
+    }
+
+    @Test
+    public void testVersionEndpoint() {
+        TestRestTemplate restTemplate = new TestRestTemplate();
+        String response = restTemplate.getForObject("http://localhost:" + port + "/version", String.class);
+        assertNotNull(response);
+        assertTrue(response.contains("Version 1.0.0"));
+    }
+
+    @Test
+    public void testHealthEndpoint() {
+        TestRestTemplate restTemplate = new TestRestTemplate();
+        String response = restTemplate.getForObject("http://localhost:" + port + "/health", String.class);
+        assertNotNull(response);
+        assertTrue(response.contains("healthy"));
     }
 }
 EOF
 fi
 
 # Create pom.xml if not exists
-if [ ! -f "pom.xml" ]; then
+if [ ! -f "jenkins/pom.xml" ]; then
     print_status "Creating Maven POM file..."
-    cat > pom.xml << 'EOF'
+    cat > jenkins/pom.xml << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
@@ -136,51 +180,59 @@ if [ ! -f "pom.xml" ]; then
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>Microservices Application</name>
-    <description>Demo microservices application for CI/CD pipeline</description>
+    <name>Microservices Demo Application</name>
+    <description>Demo microservice for Jenkins CI/CD pipeline</description>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.14</version>
+        <relativePath/>
+    </parent>
 
     <properties>
+        <java.version>11</java.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <spring.boot.version>2.7.0</spring.boot.version>
-        <junit.version>5.8.2</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sonar.organization>your-org</sonar.organization>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
     </properties>
 
     <dependencies>
+        <!-- Spring Boot Web Starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.boot.version}</version>
         </dependency>
 
+        <!-- Spring Boot Actuator for health checks -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-            <version>${spring.boot.version}</version>
         </dependency>
 
+        <!-- Spring Boot Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>${spring.boot.version}</version>
             <scope>test</scope>
         </dependency>
 
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -190,10 +242,11 @@ if [ ! -f "pom.xml" ]; then
                 </executions>
             </plugin>
 
+            <!-- Maven Surefire Plugin for tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.0.0-M9</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
@@ -202,10 +255,11 @@ if [ ! -f "pom.xml" ]; then
                 </configuration>
             </plugin>
 
+            <!-- JaCoCo Plugin for code coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
+                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <goals>
@@ -222,19 +276,21 @@ if [ ! -f "pom.xml" ]; then
                 </executions>
             </plugin>
 
+            <!-- SonarQube Scanner -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.9.1.2184</version>
             </plugin>
 
+            <!-- Maven Compiler Plugin -->
             <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>7.1.1</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
                 <configuration>
-                    <format>ALL</format>
-                    <outputDirectory>target/dependency-check</outputDirectory>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -243,8 +299,84 @@ if [ ! -f "pom.xml" ]; then
 EOF
 fi
 
-# Copy sample test
-cp -r src jenkins/
+# Create application.properties
+if [ ! -f "jenkins/src/main/resources/application.properties" ]; then
+    print_status "Creating application properties file..."
+    cat > jenkins/src/main/resources/application.properties << 'EOF'
+# Server configuration
+server.port=8080
+server.servlet.context-path=/
+
+# Application configuration
+spring.application.name=microservices-demo-app
+spring.profiles.active=default
+
+# Actuator configuration
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=always
+
+# Logging configuration
+logging.level.com.example=INFO
+logging.level.org.springframework=WARN
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+
+# Docker profile specific settings
+---
+spring.config.activate.on-profile=docker
+server.port=8080
+logging.level.com.example=DEBUG
+EOF
+fi
+
+# Create UI
+if [ ! -f "jenkins/html/index.html" ]; then
+    print_status "Creating index file..."
+    cat > jenkins/html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Microservices Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Microservices Demo Application</h1>
+        <p class="status">✅ Application is running successfully!</p>
+        <p><strong>Version:</strong> 1.0.0</p>
+        <p><strong>Port:</strong> 3000</p>
+        <p><strong>Status:</strong> Healthy</p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+
+        <h2>Available Endpoints:</h2>
+        <ul>
+            <li><a href="/">/ - Main page</a></li>
+            <li><a href="/health.html">Health check</a></li>
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toISOString();
+    </script>
+</body>
+</html>
+EOF
+fi
+
+if [ ! -f "jenkins/html/health.html" ]; then
+    print_status "Creating health file..."
+    cat > jenkins/html/health.html << 'EOF'
+{
+  "status": "UP",
+  "application": "microservices-demo",
+  "version": "1.0.0",
+  "timestamp": "2025-06-17T10:00:00Z"
+}
+EOF
+fi
 
 # Pull required Docker images
 print_status "Pulling Docker images..."

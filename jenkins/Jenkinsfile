@@ -393,7 +393,7 @@ EOF
 
                                 # Check if application is responding
                                 for i in {1..5}; do
-                                    if curl -f http://localhost:3000/actuator/health; then
+                                    if curl -f http://localhost:3000/health; then
                                         echo "✅ Health check passed"
                                         break
                                     else
@@ -417,7 +417,7 @@ EOF
 
                                     # Test basic endpoints
                                     curl -f http://localhost:3000/ || echo "Main endpoint test failed"
-                                    curl -f http://localhost:3000/actuator/info || echo "Info endpoint test failed"
+                                    curl -f http://localhost:3000/api/status || echo "Info endpoint test failed"
                                 '''
                             } catch (Exception e) {
                                 echo "⚠️ Integration tests failed: ${e.getMessage()}"
