@@ -12,7 +12,6 @@ services:
       - ./scripts:/scripts
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
-      - JENKINS_OPTS=--httpPort=8000
     networks:
       - jenkins-network
     restart: unless-stopped
