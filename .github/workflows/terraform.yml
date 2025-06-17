@@ -91,7 +91,7 @@ jobs:
         directory: terraform
         framework: terraform
         output_format: cli,json
-        output_file_path: reports/results_json.json
+        output_file_path: reports
         download_external_modules: true
         quiet: true
         soft_fail: true
