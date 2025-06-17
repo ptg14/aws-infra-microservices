@@ -43,7 +43,7 @@ print_status "Setting up Jenkins CI/CD environment for microservices..."
 print_status "Creating directory structure..."
 mkdir -p jenkins/{data,html}
 mkdir -p jenkins/src/{main,test}/java/com/example
-mkdir -p jenkins/src/main/resources
+mkdir -p jenkins/src/{main,test}/resources
 mkdir -p target/surefire-reports
 mkdir -p .jenkins
 
@@ -305,11 +305,9 @@ if [ ! -f "jenkins/src/main/resources/application.properties" ]; then
     cat > jenkins/src/main/resources/application.properties << 'EOF'
 # Server configuration
 server.port=8080
-server.servlet.context-path=/
 
 # Application configuration
 spring.application.name=microservices-demo-app
-spring.profiles.active=default
 
 # Actuator configuration
 management.endpoints.web.exposure.include=health,info,metrics
@@ -319,12 +317,17 @@ management.endpoint.health.show-details=always
 logging.level.com.example=INFO
 logging.level.org.springframework=WARN
 logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+EOF
+fi
 
-# Docker profile specific settings
----
-spring.config.activate.on-profile=docker
+# Create application-docker.properties
+if [ ! -f "jenkins/src/main/resources/application-docker.properties" ]; then
+    print_status "Creating application-docker properties file..."
+    cat > jenkins/src/main/resources/application-docker.properties << 'EOF'
+# Docker specific configuration
 server.port=8080
 logging.level.com.example=DEBUG
+logging.level.org.springframework=INFO
 EOF
 fi
 

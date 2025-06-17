@@ -63,6 +63,9 @@ mvn --version
 
 # Kiểm tra kubectl (cho Kubernetes deployment)
 kubectl version --client
+
+# Kiểm tra trạng thái Jenkins
+sudo systemctl status jenkins
 ```
 
 #### 1.2 Clone Project
