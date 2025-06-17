@@ -9,8 +9,7 @@ output:
   - cli
   - json
 
-output_file_path:
-  - reports
+output-file-path: reports
 
 quiet: false
 
@@ -19,7 +18,7 @@ compact: true
 directory:
   - terraform/
 
-skip_check:
+skip-check:
   - CKV_AWS_79
   - CKV_AWS_20
   - CKV_AWS_23
