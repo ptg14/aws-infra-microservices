@@ -110,6 +110,12 @@ curl -f http://localhost:9000 || echo "SonarQube đang khởi động..."
 curl -f http://localhost:3000 || echo "Demo app đang khởi động..."
 ```
 
+#### 2.4 All Monitoring
+```bash
+./jenkins/scripts/monitor-system.sh
+```
+## Các bước sau hướng dẫn cấu hình thêm (optional)
+
 ### Bước 3: Cấu hình Jenkins
 
 #### 3.1 Hoàn tất Jenkins Setup Wizard
