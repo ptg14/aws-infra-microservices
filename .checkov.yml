@@ -9,6 +9,9 @@ output:
   - cli
   - json
 
+output_file_path:
+  - reports
+
 quiet: false
 
 compact: true
@@ -16,15 +19,7 @@ compact: true
 directory:
   - terraform/
 
-severity:
-  - critical
-  - high
-  - medium
-
-check:
-  # Focus on essential security checks
-  - CKV_AWS_8    # Ensure all data stored in the Launch configuration EBS is securely encrypted at rest
-  - CKV_AWS_126  # Ensure that detailed monitoring is enabled for EC2 instances
-  - CKV_AWS_135  # Ensure that EC2 is EBS optimized
-  - CKV_AWS_24   # Ensure no security groups allow ingress from 0.0.0.0:0 to port 22
-  - CKV_AWS_25   # Ensure no security groups allow ingress from 0.0.0.0:0 to port 3389
+skip_check:
+  - CKV_AWS_79
+  - CKV_AWS_20
+  - CKV_AWS_23
