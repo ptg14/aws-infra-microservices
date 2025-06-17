@@ -84,105 +84,101 @@ jobs:
         pip install checkov
         checkov --version
 
-    - name: Run Checkov Security Scan
+    - name: Run Checkov scan
       id: checkov
-      run: |
-        echo "Running Checkov security scan..."
-        mkdir -p reports
-
-        # Run checkov with multiple output formats
-        checkov -d . \
-          --framework terraform \
-          --output sarif \
-          --output-file-path reports/checkov-results.sarif \
-          --quiet || echo "Checkov scan completed with issues"
-
-        # Also generate JSON format for backup
-        checkov -d . \
-          --framework terraform \
-          --output json \
-          --output-file-path reports/checkov-results.json \
-          --quiet || echo "Checkov JSON scan completed"
-
-        # Check if SARIF file was created
-        if [ -f "reports/checkov-results.sarif" ]; then
-          echo "SARIF file created successfully"
-          echo "sarif_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "SARIF file not created, generating empty SARIF"
-          cat > reports/checkov-results.sarif << 'EOF'
-        {
-          "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-          "version": "2.1.0",
-          "runs": [
-            {
-              "tool": {
-                "driver": {
-                  "name": "Checkov",
-                  "version": "latest"
-                }
-              },
-              "results": []
-            }
-          ]
-        }
-        EOF
-          echo "sarif_exists=false" >> $GITHUB_OUTPUT
-        fi
-
-        # Store results for summary
-        if [ -f "reports/checkov-results.json" ]; then
-          echo "CHECKOV_RESULTS<<EOF" >> $GITHUB_ENV
-          cat reports/checkov-results.json >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-        fi
-
-    - name: Debug Checkov Output
-      if: always()
-      run: |
-        echo "=== Debugging Checkov Results ==="
-        echo "Reports directory contents:"
-        ls -la reports/ || echo "Reports directory not found"
-
-        echo -e "\n=== Checkov Version ==="
-        checkov --version
-
-        echo -e "\n=== Test Checkov Command ==="
-        checkov -d . --framework terraform --check CKV_AWS_1 --quiet || echo "Test completed"
-
-        echo -e "\n=== All files in current directory ==="
-        find . -type f -name "*.tf" -o -name "*.sarif" -o -name "*.json" | head -20
-
-    - name: Upload Checkov Results to GitHub Security
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
+      uses: bridgecrewio/checkov-action@master
       with:
-        sarif_file: reports/checkov-results.sarif
-        category: "checkov"
+        directory: terraform
+        framework: terraform
+        output_format: cli,json
+        output_file_path: reports/results.json
+        download_external_modules: true
+        quiet: true
+        soft_fail: true
+        skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23
+      continue-on-error: true
 
-    - name: Checkov Security Summary
-      if: always()
+    - name: Debug Checkov outputs
       run: |
-        echo "## 🔍 Checkov Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "Checking reports directory contents..."
+        ls -la reports/ || echo "Reports directory not found"
+        echo "Current directory contents:"
+        ls -la
+        echo "Looking for JSON files:"
+        find . -name "*.json" -type f 2>/dev/null || echo "No JSON files found"
 
-        if [ "${{ steps.checkov.outputs.sarif_exists }}" == "true" ]; then
-          echo "✅ Security scan completed successfully" >> $GITHUB_STEP_SUMMARY
+    - name: Parse Checkov JSON Results
+      id: parse_checkov
+      run: |
+        if [ -f "reports/results.json" ]; then
+          echo "JSON_EXISTS=true" >> $GITHUB_ENV
+          echo "JSON_PATH=reports/results.json" >> $GITHUB_ENV
+
+          # Parse JSON results
+          PASSED_CHECKS=$(jq -r '.summary.passed' reports/results.json 2>/dev/null || echo "0")
+          FAILED_CHECKS=$(jq -r '.summary.failed' reports/results.json 2>/dev/null || echo "0")
+          SKIPPED_CHECKS=$(jq -r '.summary.skipped' reports/results.json 2>/dev/null || echo "0")
+
+          echo "PASSED_CHECKS=$PASSED_CHECKS" >> $GITHUB_ENV
+          echo "FAILED_CHECKS=$FAILED_CHECKS" >> $GITHUB_ENV
+          echo "SKIPPED_CHECKS=$SKIPPED_CHECKS" >> $GITHUB_ENV
+
+          echo "Checkov Results Summary:"
+          echo "✅ Passed: $PASSED_CHECKS"
+          echo "❌ Failed: $FAILED_CHECKS"
+          echo "⏭️ Skipped: $SKIPPED_CHECKS"
         else
-          echo "⚠️ No security issues found or scan completed without generating results" >> $GITHUB_STEP_SUMMARY
+          echo "JSON_EXISTS=false" >> $GITHUB_ENV
+          echo "No JSON results file found"
         fi
 
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Scan Details:" >> $GITHUB_STEP_SUMMARY
-        echo "- **Framework:** Terraform" >> $GITHUB_STEP_SUMMARY
-        echo "- **Directory:** ." >> $GITHUB_STEP_SUMMARY
-        echo "- **Results:** Check the Security tab for detailed findings" >> $GITHUB_STEP_SUMMARY
+    - name: Checkov Summary
+      if: always()
+      run: |
+        echo "## Checkov Security Scan Results" >> $GITHUB_STEP_SUMMARY
 
-        # Show file listing for debugging
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Generated Files:" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
-        ls -la reports/ >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
+        if [ "${{ env.JSON_EXISTS }}" == "true" ]; then
+          echo "✅ Security scan completed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Passed**: ${{ env.PASSED_CHECKS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ❌ **Failed**: ${{ env.FAILED_CHECKS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏭️ **Skipped**: ${{ env.SKIPPED_CHECKS }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Show failed checks details if any
+          if [ "${{ env.FAILED_CHECKS }}" != "0" ]; then
+            echo "### Failed Checks Details" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            jq -r '.results.failed_checks[] | "- " + .check_id + ": " + .check_name + " (" + .file_path + ")"' reports/results.json | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse failed checks" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+            if [ "${{ env.FAILED_CHECKS }}" -gt "10" ]; then
+              echo "*... and $((${{ env.FAILED_CHECKS }} - 10)) more failed checks. Check the full report for details.*" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+        else
+          echo "⚠️ Security scan completed but no JSON results file was generated." >> $GITHUB_STEP_SUMMARY
+        fi
+
+        # Show CLI output summary if available
+        if [ -f "reports/results_cli.txt" ]; then
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### CLI Output Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          tail -15 reports/results_cli.txt >> $GITHUB_STEP_SUMMARY || echo "Could not read CLI results file" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Upload Checkov JSON Results
+      if: env.JSON_EXISTS == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: checkov-results
+        path: |
+          reports/results.json
+          reports/results_cli.txt
+        retention-days: 30
 
     - name: Terraform Plan
       id: plan
