@@ -1,0 +1,761 @@
+b/39026439043920943300295194769326793189926121717064204288/s	f/39026440437115398088098814365973999667473501805488373881/s
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:25.805970 Running on CodeBuild On-demand
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:25.805984 Waiting for agent ping
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:26.008181 Waiting for DOWNLOAD_SOURCE
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.165515 Phase is DOWNLOAD_SOURCE
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.166496 CODEBUILD_SRC_DIR=/codebuild/output/src1408676735/src
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.167006 YAML location is /codebuild/output/src1408676735/src/cloudformation/buildspec.yml
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.170631 Setting HTTP client timeout to higher timeout for S3 source
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.170738 Processing environment variables
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.212879 Expanded report group name cfn-lint-report
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.216465 Expanded report group name build-summary
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.216516 Found report group name cfn-lint-report
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.216529 Adding prefix microservices-infrastructure-build for report group name cfn-lint-report
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.216544 Found report group name build-summary
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.216549 Adding prefix microservices-infrastructure-build for report group name build-summary
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.404788 Selecting 'python' runtime version '3.9' based on manual selections...
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.404894 Running command echo "Installing Python version 3.9 ..."
+	1750006051210
+EVENTS	1750006051250	Installing Python version 3.9 ...
+	1750006051210
+EVENTS	1750006051250	
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:27.408661 Running command pyenv global  $PYTHON_39_VERSION
+	1750006051210
+EVENTS	1750006051250	
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.012811 Moving to directory /codebuild/output/src1408676735/src
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.012878 Cache is not defined in the buildspec
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053053 Skip cache due to: no paths specified to be cached
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053406 Registering with agent
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053421 Phases found in YAML: 4
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053428  PRE_BUILD: 9 commands
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053434  BUILD: 4 commands
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053438  POST_BUILD: 4 commands
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053441  INSTALL: 7 commands
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053841 Phase complete: DOWNLOAD_SOURCE State: SUCCEEDED
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.053853 Phase context status code:  Message: 
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.123698 Entering phase INSTALL
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.155429 Running command echo "Installing dependencies..."
+	1750006051210
+EVENTS	1750006051250	Installing dependencies...
+	1750006051210
+EVENTS	1750006051250	
+	1750006051210
+EVENTS	1750006051250	[Container] 2025/06/15 16:47:28.160654 Running command pip install --upgrade pip
+	1750006051210
+EVENTS	1750006061308	Requirement already satisfied: pip in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (21.3.1)
+	1750006061280
+EVENTS	1750006061308	Collecting pip
+	1750006061280
+EVENTS	1750006061308	  Downloading pip-25.1.1-py3-none-any.whl (1.8 MB)
+	1750006061280
+EVENTS	1750006069349	Installing collected packages: pip
+	1750006069321
+EVENTS	1750006069349	  Attempting uninstall: pip
+	1750006069321
+EVENTS	1750006069349	    Found existing installation: pip 21.3.1
+	1750006069321
+EVENTS	1750006069349	    Uninstalling pip-21.3.1:
+	1750006069321
+EVENTS	1750006071368	      Successfully uninstalled pip-21.3.1
+	1750006071363
+EVENTS	1750006071368	Successfully installed pip-25.1.1
+	1750006071363
+EVENTS	1750006071368	WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+	1750006071363
+EVENTS	1750006071368	
+	1750006071363
+EVENTS	1750006071368	[Container] 2025/06/15 16:47:50.805642 Running command pip install cfn-lint
+	1750006071363
+EVENTS	1750006075385	Requirement already satisfied: cfn-lint in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (1.32.1)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: pyyaml>5.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (6.0.2)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: aws-sam-translator>=1.95.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (1.95.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: jsonpatch in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (1.33)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: networkx<4,>=2.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (3.2.1)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: sympy>=1.0.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (1.13.3)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: regex in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (2024.11.6)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: typing_extensions in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn-lint) (4.13.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: boto3==1.*,>=1.19.5 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from aws-sam-translator>=1.95.0->cfn-lint) (1.37.24)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: jsonschema<5,>=3.2 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from aws-sam-translator>=1.95.0->cfn-lint) (4.23.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: pydantic!=1.10.15,!=1.10.17,<3,>=1.8 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from aws-sam-translator>=1.95.0->cfn-lint) (2.11.1)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: botocore<1.38.0,>=1.37.24 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (1.37.24)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: jmespath<2.0.0,>=0.7.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (1.0.1)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: s3transfer<0.12.0,>=0.11.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (0.11.4)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore<1.38.0,>=1.37.24->boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (2.9.0.post0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: urllib3<1.27,>=1.25.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore<1.38.0,>=1.37.24->boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (1.26.20)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: attrs>=22.2.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<5,>=3.2->aws-sam-translator>=1.95.0->cfn-lint) (25.3.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<5,>=3.2->aws-sam-translator>=1.95.0->cfn-lint) (2024.10.1)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: referencing>=0.28.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<5,>=3.2->aws-sam-translator>=1.95.0->cfn-lint) (0.36.2)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: rpds-py>=0.7.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<5,>=3.2->aws-sam-translator>=1.95.0->cfn-lint) (0.24.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: annotated-types>=0.6.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn-lint) (0.7.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: pydantic-core==2.33.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn-lint) (2.33.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: typing-inspection>=0.4.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn-lint) (0.4.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: six>=1.5 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from python-dateutil<3.0.0,>=2.1->botocore<1.38.0,>=1.37.24->boto3==1.*,>=1.19.5->aws-sam-translator>=1.95.0->cfn-lint) (1.17.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: mpmath<1.4,>=1.1.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from sympy>=1.0.0->cfn-lint) (1.3.0)
+	1750006075381
+EVENTS	1750006075385	Requirement already satisfied: jsonpointer>=1.9 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonpatch->cfn-lint) (3.0.0)
+	1750006075381
+EVENTS	1750006079403	WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+	1750006079399
+EVENTS	1750006079403	
+	1750006079399
+EVENTS	1750006079403	[Container] 2025/06/15 16:47:58.154879 Running command pip install taskcat
+	1750006079399
+EVENTS	1750006079403	Collecting taskcat
+	1750006079399
+EVENTS	1750006079403	  Downloading taskcat-0.9.57-py3-none-any.whl.metadata (1.2 kB)
+	1750006079399
+EVENTS	1750006079403	Collecting GitPython>=3.1.43 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading GitPython-3.1.44-py3-none-any.whl.metadata (13 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: PyYAML<7.0,>=6.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (6.0.2)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: boto3<2.0,>=1.9.21 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (1.37.24)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: botocore<2.0,>=1.12.21 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (1.37.24)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: cfn_lint<2.0,>=0.78.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (1.32.1)
+	1750006079399
+EVENTS	1750006079403	Collecting dataclasses-jsonschema<2.15.2,>=2.9.0 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading dataclasses_jsonschema-2.15.1-py3-none-any.whl.metadata (7.2 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: docker<8.0,>=7.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (7.1.0)
+	1750006079399
+EVENTS	1750006079403	Collecting dulwich<1.0,>=0.19 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading dulwich-0.22.8-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: jinja2<4.0,>=3.1.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (3.1.6)
+	1750006079399
+EVENTS	1750006079403	Collecting jsonschema<4.0,>=3.0 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading jsonschema-3.2.0-py2.py3-none-any.whl.metadata (7.8 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: markupsafe>=2.0.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (3.0.2)
+	1750006079399
+EVENTS	1750006079403	Collecting pathspec==0.10.3 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading pathspec-0.10.3-py3-none-any.whl.metadata (18 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: pip in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (25.1.1)
+	1750006079399
+EVENTS	1750006079403	Collecting reprint (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading reprint-0.6.0-py2.py3-none-any.whl.metadata (469 bytes)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: requests>=2.31.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (2.32.3)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: setuptools>=40.4.3 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (57.5.0)
+	1750006079399
+EVENTS	1750006079403	Collecting tabulate<1.0,>=0.8.2 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading tabulate-0.9.0-py3-none-any.whl.metadata (34 kB)
+	1750006079399
+EVENTS	1750006079403	Requirement already satisfied: urllib3<2 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from taskcat) (1.26.20)
+	1750006079399
+EVENTS	1750006079403	Collecting yattag<2.0,>=1.10.0 (from taskcat)
+	1750006079399
+EVENTS	1750006079403	  Downloading yattag-1.16.1.tar.gz (29 kB)
+	1750006079399
+EVENTS	1750006079403	  Preparing metadata (setup.py): started
+	1750006079399
+EVENTS	1750006081420	  Preparing metadata (setup.py): finished with status 'done'
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: jmespath<2.0.0,>=0.7.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from boto3<2.0,>=1.9.21->taskcat) (1.0.1)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: s3transfer<0.12.0,>=0.11.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from boto3<2.0,>=1.9.21->taskcat) (0.11.4)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore<2.0,>=1.12.21->taskcat) (2.9.0.post0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: aws-sam-translator>=1.95.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (1.95.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: jsonpatch in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (1.33)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: networkx<4,>=2.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (3.2.1)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: sympy>=1.0.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (1.13.3)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: regex in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (2024.11.6)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: typing_extensions in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from cfn_lint<2.0,>=0.78.1->taskcat) (4.13.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: attrs>=17.4.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<4.0,>=3.0->taskcat) (25.3.0)
+	1750006081415
+EVENTS	1750006081420	Collecting pyrsistent>=0.14.0 (from jsonschema<4.0,>=3.0->taskcat)
+	1750006081415
+EVENTS	1750006081420	  Downloading pyrsistent-0.20.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (27 kB)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: six>=1.11.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonschema<4.0,>=3.0->taskcat) (1.17.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: pydantic!=1.10.15,!=1.10.17,<3,>=1.8 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from aws-sam-translator>=1.95.0->cfn_lint<2.0,>=0.78.1->taskcat) (2.11.1)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: annotated-types>=0.6.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn_lint<2.0,>=0.78.1->taskcat) (0.7.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: pydantic-core==2.33.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn_lint<2.0,>=0.78.1->taskcat) (2.33.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: typing-inspection>=0.4.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from pydantic!=1.10.15,!=1.10.17,<3,>=1.8->aws-sam-translator>=1.95.0->cfn_lint<2.0,>=0.78.1->taskcat) (0.4.0)
+	1750006081415
+EVENTS	1750006081420	Collecting gitdb<5,>=4.0.1 (from GitPython>=3.1.43->taskcat)
+	1750006081415
+EVENTS	1750006081420	  Downloading gitdb-4.0.12-py3-none-any.whl.metadata (1.2 kB)
+	1750006081415
+EVENTS	1750006081420	Collecting smmap<6,>=3.0.1 (from gitdb<5,>=4.0.1->GitPython>=3.1.43->taskcat)
+	1750006081415
+EVENTS	1750006081420	  Downloading smmap-5.0.2-py3-none-any.whl.metadata (4.3 kB)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: charset-normalizer<4,>=2 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from requests>=2.31.0->taskcat) (3.4.1)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: idna<4,>=2.5 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from requests>=2.31.0->taskcat) (3.10)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: certifi>=2017.4.17 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from requests>=2.31.0->taskcat) (2025.1.31)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: mpmath<1.4,>=1.1.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from sympy>=1.0.0->cfn_lint<2.0,>=0.78.1->taskcat) (1.3.0)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: jsonpointer>=1.9 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from jsonpatch->cfn_lint<2.0,>=0.78.1->taskcat) (3.0.0)
+	1750006081415
+EVENTS	1750006081420	Collecting backports.shutil-get-terminal-size (from reprint->taskcat)
+	1750006081415
+EVENTS	1750006081420	  Downloading backports.shutil_get_terminal_size-1.0.0-py2.py3-none-any.whl.metadata (1.2 kB)
+	1750006081415
+EVENTS	1750006081420	Requirement already satisfied: colorama in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from reprint->taskcat) (0.4.6)
+	1750006081415
+EVENTS	1750006081420	Downloading taskcat-0.9.57-py3-none-any.whl (123 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading pathspec-0.10.3-py3-none-any.whl (29 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading dataclasses_jsonschema-2.15.1-py3-none-any.whl (17 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading dulwich-0.22.8-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.0 MB)
+	1750006081415
+EVENTS	1750006081420	   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 109.4 MB/s eta 0:00:00
+	1750006081415
+EVENTS	1750006081420	Downloading jsonschema-3.2.0-py2.py3-none-any.whl (56 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading tabulate-0.9.0-py3-none-any.whl (35 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading GitPython-3.1.44-py3-none-any.whl (207 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading gitdb-4.0.12-py3-none-any.whl (62 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading smmap-5.0.2-py3-none-any.whl (24 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading pyrsistent-0.20.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (117 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading reprint-0.6.0-py2.py3-none-any.whl (6.0 kB)
+	1750006081415
+EVENTS	1750006081420	Downloading backports.shutil_get_terminal_size-1.0.0-py2.py3-none-any.whl (6.5 kB)
+	1750006081415
+EVENTS	1750006081420	Building wheels for collected packages: yattag
+	1750006081415
+EVENTS	1750006081420	  DEPRECATION: Building 'yattag' using the legacy setup.py bdist_wheel mechanism, which will be removed in a future version. pip 25.3 will enforce this behaviour change. A possible replacement is to use the standardized build interface by setting the `--use-pep517` option, (possibly combined with `--no-build-isolation`), or adding a `pyproject.toml` file to the source tree of 'yattag'. Discussion can be found at https://github.com/pypa/pip/issues/6334
+	1750006081415
+EVENTS	1750006081420	  Building wheel for yattag (setup.py): started
+	1750006081415
+EVENTS	1750006081420	  Building wheel for yattag (setup.py): finished with status 'done'
+	1750006081415
+EVENTS	1750006081420	  Created wheel for yattag: filename=yattag-1.16.1-py3-none-any.whl size=15905 sha256=65895af19075318ef1503c7362bb73cd57deacaf8c3d437b6f51568004ab75c1
+	1750006081415
+EVENTS	1750006081420	  Stored in directory: /root/.cache/pip/wheels/cf/f2/35/8117c55b7d22635469f914eb5788ef635682bf9a224dfdfee9
+	1750006081415
+EVENTS	1750006081420	Successfully built yattag
+	1750006081415
+EVENTS	1750006085437	Installing collected packages: yattag, backports.shutil-get-terminal-size, tabulate, smmap, reprint, pyrsistent, pathspec, dulwich, jsonschema, gitdb, GitPython, dataclasses-jsonschema, taskcat
+	1750006085433
+EVENTS	1750006085437	  Attempting uninstall: jsonschema
+	1750006085433
+EVENTS	1750006085437	    Found existing installation: jsonschema 4.23.0
+	1750006085433
+EVENTS	1750006085437	    Uninstalling jsonschema-4.23.0:
+	1750006085433
+EVENTS	1750006085437	      Successfully uninstalled jsonschema-4.23.0
+	1750006085433
+EVENTS	1750006087517	
+	1750006087513
+EVENTS	1750006087517	Successfully installed GitPython-3.1.44 backports.shutil-get-terminal-size-1.0.0 dataclasses-jsonschema-2.15.1 dulwich-0.22.8 gitdb-4.0.12 jsonschema-3.2.0 pathspec-0.10.3 pyrsistent-0.20.0 reprint-0.6.0 smmap-5.0.2 tabulate-0.9.0 taskcat-0.9.57 yattag-1.16.1
+	1750006087513
+EVENTS	1750006087517	WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+	1750006087513
+EVENTS	1750006087517	
+	1750006087513
+EVENTS	1750006087517	[Container] 2025/06/15 16:48:05.836356 Running command pip install awscli
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: awscli in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (1.38.24)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: botocore==1.37.24 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (1.37.24)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: docutils<0.17,>=0.10 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (0.16)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: s3transfer<0.12.0,>=0.11.0 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (0.11.4)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: PyYAML<6.1,>=3.10 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (6.0.2)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: colorama<0.4.7,>=0.2.5 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (0.4.6)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: rsa<4.8,>=3.1.2 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from awscli) (4.7.2)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: jmespath<2.0.0,>=0.7.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore==1.37.24->awscli) (1.0.1)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore==1.37.24->awscli) (2.9.0.post0)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: urllib3<1.27,>=1.25.4 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from botocore==1.37.24->awscli) (1.26.20)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: six>=1.5 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from python-dateutil<3.0.0,>=2.1->botocore==1.37.24->awscli) (1.17.0)
+	1750006087513
+EVENTS	1750006087517	Requirement already satisfied: pyasn1>=0.1.3 in /root/.pyenv/versions/3.9.17/lib/python3.9/site-packages (from rsa<4.8,>=3.1.2->awscli) (0.6.1)
+	1750006087513
+EVENTS	1750006091580	WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+	1750006091527
+EVENTS	1750006091580	
+	1750006091527
+EVENTS	1750006091580	[Container] 2025/06/15 16:48:10.442489 Running command cfn-lint --version
+	1750006091527
+EVENTS	1750006099618	cfn-lint 1.32.1
+	1750006099592
+EVENTS	1750006099618	
+	1750006099592
+EVENTS	1750006099618	[Container] 2025/06/15 16:48:19.452464 Running command taskcat --version
+	1750006099592
+EVENTS	1750006101634	 _            _             _   
+	1750006101631
+EVENTS	1750006101634	| |_ __ _ ___| | _____ __ _| |_ 
+	1750006101631
+EVENTS	1750006101634	| __/ _` / __| |/ / __/ _` | __|
+	1750006101631
+EVENTS	1750006101634	| || (_| \__ \   < (_| (_| | |_ 
+	1750006101631
+EVENTS	1750006101634	 \__\__,_|___/_|\_\___\__,_|\__|
+	1750006101631
+EVENTS	1750006101634	                                
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	version 0.9.57
+	1750006101631
+EVENTS	1750006101634	0.9.57
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.555406 Phase complete: INSTALL State: SUCCEEDED
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.555427 Phase context status code:  Message: 
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.588537 Entering phase PRE_BUILD
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.589544 Running command echo "Pre-build phase started on `date`"
+	1750006101631
+EVENTS	1750006101634	Pre-build phase started on Sun Jun 15 16:48:21 UTC 2025
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.597840 Running command echo "Validating CloudFormation templates..."
+	1750006101631
+EVENTS	1750006101634	Validating CloudFormation templates...
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.604960 Running command echo "Running cfn-lint..."
+	1750006101631
+EVENTS	1750006101634	Running cfn-lint...
+	1750006101631
+EVENTS	1750006101634	
+	1750006101631
+EVENTS	1750006101634	[Container] 2025/06/15 16:48:21.612065 Running command cfn-lint cloudformation/infrastructure.yaml --info
+	1750006101631
+EVENTS	1750006105647	2025-06-15 16:48:25,353 - cfnlint.runner - INFO - Run scan of template cloudformation/infrastructure.yaml
+	1750006105643
+EVENTS	1750006107660	
+	1750006107656
+EVENTS	1750006107660	[Container] 2025/06/15 16:48:26.345014 Running command cfn-lint cloudformation/infrastructure.yaml --format json > cfn-lint-results.json || true
+	1750006107656
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	[Container] 2025/06/15 16:48:28.178881 Running command echo "Running Taskcat lint..."
+	1750006109670
+EVENTS	1750006109674	Running Taskcat lint...
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	[Container] 2025/06/15 16:48:28.188253 Running command taskcat lint --config .taskcat.yml || true
+	1750006109670
+EVENTS	1750006109674	 _            _             _   
+	1750006109670
+EVENTS	1750006109674	| |_ __ _ ___| | _____ __ _| |_ 
+	1750006109670
+EVENTS	1750006109674	| __/ _` / __| |/ / __/ _` | __|
+	1750006109670
+EVENTS	1750006109674	| || (_| \__ \   < (_| (_| | |_ 
+	1750006109670
+EVENTS	1750006109674	 \__\__,_|___/_|\_\___\__,_|\__|
+	1750006109670
+EVENTS	1750006109674	                                
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	version 0.9.57
+	1750006109670
+EVENTS	1750006109674	error: unrecognized arguments: --config .taskcat.yml
+	1750006109670
+EVENTS	1750006109674	usage: taskcat [args] <command> [args] [subcommand] [args] 
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	taskcat is a tool that tests AWS CloudFormation templates. It deploys your AWS CloudFormation template in multiple AWS Regions and generates a report with a pass/fail grade for each region. You can specify the regions and number of Availability Zones you want to include in the test, and pass in parameter values from your AWS CloudFormation template.
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	optional arguments:
+	1750006109670
+EVENTS	1750006109674	  -h, --help          show this help message and exit
+	1750006109670
+EVENTS	1750006109674	  -v, --version       show program's version number and exit
+	1750006109670
+EVENTS	1750006109674	  -q, --quiet         reduce output to the minimum
+	1750006109670
+EVENTS	1750006109674	  -d, --debug         adds debug output and tracebacks
+	1750006109670
+EVENTS	1750006109674	  --profile _PROFILE  set the default profile used.
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	commands:
+	1750006109670
+EVENTS	1750006109674	  config - Mutating actions regarding the config file
+	1750006109670
+EVENTS	1750006109674	  delete - [ALPHA] Deletes an installed project in an AWS account/region
+	1750006109670
+EVENTS	1750006109674	  deploy - [ALPHA] installs a stack into an AWS account/regions
+	1750006109670
+EVENTS	1750006109674	  generate-config - [ALPHA] Introspects CFN Template(s) and generates a taskcat configuration filenecessary to successfully run taskcat.
+	1750006109670
+EVENTS	1750006109674	  generate-iam-policy - [ALPHA] Introspects CFN Template(s) and generates an IAM policy necessary to successfully launch the template(s)
+	1750006109670
+EVENTS	1750006109674	  lint - checks CloudFormation templates for issues using cfn-python-lint
+	1750006109670
+EVENTS	1750006109674	  list - [ALPHA] lists taskcat jobs with active stacks
+	1750006109670
+EVENTS	1750006109674	  package - packages lambda source files into zip files. If a dockerfile is present in asource folder, it will be run prior to zipping the contents
+	1750006109670
+EVENTS	1750006109674	  package-single - packages lambda source files into zip files. If a dockerfile is present in asource folder, it will be run prior to zipping the contents
+	1750006109670
+EVENTS	1750006109674	  test - Performs functional tests on CloudFormation templates.
+	1750006109670
+EVENTS	1750006109674	  update-ami - Updates AMI IDs within CloudFormation templates
+	1750006109670
+EVENTS	1750006109674	  upload - Uploads project to S3.
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	  
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	[Container] 2025/06/15 16:48:29.505073 Running command echo "Running AWS CLI validation..."
+	1750006109670
+EVENTS	1750006109674	Running AWS CLI validation...
+	1750006109670
+EVENTS	1750006109674	
+	1750006109670
+EVENTS	1750006109674	[Container] 2025/06/15 16:48:29.512377 Running command aws cloudformation validate-template --template-body file://cloudformation/infrastructure.yaml
+	1750006109670
+EVENTS	1750006113691	{
+	1750006113683
+EVENTS	1750006113691	    "Parameters": [
+	1750006113683
+EVENTS	1750006113691	        {
+	1750006113683
+EVENTS	1750006113691	            "ParameterKey": "KeyName",
+	1750006113683
+EVENTS	1750006113691	            "DefaultValue": "",
+	1750006113683
+EVENTS	1750006113691	            "NoEcho": false,
+	1750006113683
+EVENTS	1750006113691	            "Description": "EC2 Key Pair name (optional)"
+	1750006113683
+EVENTS	1750006113691	        },
+	1750006113683
+EVENTS	1750006113691	        {
+	1750006113683
+EVENTS	1750006113691	            "ParameterKey": "VpcCidr",
+	1750006113683
+EVENTS	1750006113691	            "DefaultValue": "10.0.0.0/16",
+	1750006113683
+EVENTS	1750006113691	            "NoEcho": false,
+	1750006113683
+EVENTS	1750006113691	            "Description": "CIDR block for VPC"
+	1750006113683
+EVENTS	1750006113691	        },
+	1750006113683
+EVENTS	1750006113691	        {
+	1750006113683
+EVENTS	1750006113691	            "ParameterKey": "ProjectName",
+	1750006113683
+EVENTS	1750006113691	            "DefaultValue": "microservices",
+	1750006113683
+EVENTS	1750006113691	            "NoEcho": false,
+	1750006113683
+EVENTS	1750006113691	            "Description": "Name of the project"
+	1750006113683
+EVENTS	1750006113691	        },
+	1750006113683
+EVENTS	1750006113691	        {
+	1750006113683
+EVENTS	1750006113691	            "ParameterKey": "Environment",
+	1750006113683
+EVENTS	1750006113691	            "DefaultValue": "dev",
+	1750006113683
+EVENTS	1750006113691	            "NoEcho": false,
+	1750006113683
+EVENTS	1750006113691	            "Description": "Environment name"
+	1750006113683
+EVENTS	1750006113691	        },
+	1750006113683
+EVENTS	1750006113691	        {
+	1750006113683
+EVENTS	1750006113691	            "ParameterKey": "InstanceType",
+	1750006113683
+EVENTS	1750006113691	            "DefaultValue": "t3.micro",
+	1750006113683
+EVENTS	1750006113691	            "NoEcho": false,
+	1750006113683
+EVENTS	1750006113691	            "Description": "EC2 instance type"
+	1750006113683
+EVENTS	1750006113691	        }
+	1750006113683
+EVENTS	1750006113691	    ],
+	1750006113683
+EVENTS	1750006113691	    "Description": "Microservices Infrastructure - VPC, EC2, Security Groups, NAT Gateway",
+	1750006113683
+EVENTS	1750006113691	    "Capabilities": [
+	1750006113683
+EVENTS	1750006113691	        "CAPABILITY_NAMED_IAM"
+	1750006113683
+EVENTS	1750006113691	    ],
+	1750006113683
+EVENTS	1750006113691	    "CapabilitiesReason": "The following resource(s) require capabilities: [AWS::IAM::Role]"
+	1750006113683
+EVENTS	1750006113691	}
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.262784 Phase complete: PRE_BUILD State: SUCCEEDED
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.262800 Phase context status code:  Message: 
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.296991 Entering phase BUILD
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.298169 Running command echo "Build phase started on `date`"
+	1750006113683
+EVENTS	1750006113691	Build phase started on Sun Jun 15 16:48:32 UTC 2025
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.306261 Running command echo "Packaging CloudFormation template..."
+	1750006113683
+EVENTS	1750006113691	Packaging CloudFormation template...
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:32.313163 Running command aws cloudformation package --template-file cloudformation/infrastructure.yaml --s3-bucket $ARTIFACTS_BUCKET --output-template-file packaged-template.yaml
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	Successfully packaged artifacts and wrote output template to file packaged-template.yaml.
+	1750006113683
+EVENTS	1750006113691	Execute the following command to deploy the packaged template
+	1750006113683
+EVENTS	1750006113691	aws cloudformation deploy --template-file /codebuild/output/src1408676735/src/packaged-template.yaml --stack-name <YOUR STACK NAME>
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.005623 Running command cat > configuration.json << EOF
+	1750006113683
+EVENTS	1750006113691	{
+	1750006113683
+EVENTS	1750006113691	  "ProjectName": "microservices",
+	1750006113683
+EVENTS	1750006113691	  "Environment": "dev",
+	1750006113683
+EVENTS	1750006113691	  "VpcCidr": "10.0.0.0/16",
+	1750006113683
+EVENTS	1750006113691	  "InstanceType": "t3.micro",
+	1750006113683
+EVENTS	1750006113691	  "KeyName": ""
+	1750006113683
+EVENTS	1750006113691	}
+	1750006113683
+EVENTS	1750006113691	EOF
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.013958 Phase complete: BUILD State: SUCCEEDED
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.014003 Phase context status code:  Message: 
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.052354 Entering phase POST_BUILD
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.053709 Running command echo "Post-build phase started on `date`"
+	1750006113683
+EVENTS	1750006113691	Post-build phase started on Sun Jun 15 16:48:33 UTC 2025
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.061894 Running command echo "Generating build reports..."
+	1750006113683
+EVENTS	1750006113691	Generating build reports...
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.068859 Running command cat > build-report.json << EOF
+	1750006113683
+EVENTS	1750006113691	{
+	1750006113683
+EVENTS	1750006113691	  "build_time": "$(date)",
+	1750006113683
+EVENTS	1750006113691	  "cfn_lint_passed": $([ -f cfn-lint-results.json ] && echo "true" || echo "false"),
+	1750006113683
+EVENTS	1750006113691	  "aws_validation_passed": "true",
+	1750006113683
+EVENTS	1750006113691	  "template_packaged": "true"
+	1750006113683
+EVENTS	1750006113691	}
+	1750006113683
+EVENTS	1750006113691	EOF
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.077757 Running command echo "Build completed successfully"
+	1750006113683
+EVENTS	1750006113691	Build completed successfully
+	1750006113683
+EVENTS	1750006113691	
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.085082 Phase complete: POST_BUILD State: SUCCEEDED
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.085097 Phase context status code:  Message: 
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.391032 Expanding base directory path: .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.394349 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.394364 Expanding .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.397278 Expanding file paths for base directory .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.397293 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.397297 Expanding packaged-template.yaml
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.400114 Expanding configuration.json
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.402838 Expanding cfn-lint-results.json
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.405658 Expanding build-report.json
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.408379 Expanding .taskcat.yml
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.411073 Skipping invalid file path .taskcat.yml
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.411122 Found 4 file(s)
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.450694 Preparing to copy TEST report build-summary
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.450717 Expanding base directory path:  .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.454053 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.454076 Expanding .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.457026 Expanding file paths for base directory .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.457041 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.457129 Expanding build-report.json
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.459843 Found 1 file(s)
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.459859 Report export config is NO_EXPORT, skip exporting reports
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.459865 Preparing to copy TEST report cfn-lint-report
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.459871 Expanding base directory path:  .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.462618 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.462630 Expanding .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.465475 Expanding file paths for base directory .
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.465487 Assembling file list
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.465523 Expanding cfn-lint-results.json
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.468349 Found 1 file(s)
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.468365 Report export config is NO_EXPORT, skip exporting reports
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.468896 Phase complete: UPLOAD_ARTIFACTS State: SUCCEEDED
+	1750006113683
+EVENTS	1750006113691	[Container] 2025/06/15 16:48:33.468908 Phase context status code:  Message: 
+	1750006113683

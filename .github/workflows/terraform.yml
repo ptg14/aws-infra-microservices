@@ -78,6 +78,12 @@ jobs:
         mkdir -p reports
         ls -la
 
+    - name: Install Checkov
+      run: |
+        echo "Installing Checkov..."
+        pip install checkov
+        checkov --version
+
     - name: Run Checkov Security Scan
       id: checkov
       run: |
