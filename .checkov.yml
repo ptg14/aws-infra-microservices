@@ -2,7 +2,13 @@ framework:
   - terraform
   - terraform_plan
 
-output: cli
+download-external-modules: true
+evaluate-variables: true
+
+output:
+  - cli
+  - json
+  - sarif
 
 quiet: false
 
@@ -10,17 +16,6 @@ compact: true
 
 directory:
   - terraform/
-
-skip-check:
-  # Skip checks that require specific IAM permissions or configurations
-  - CKV_AWS_79   # Ensure Instance Metadata Service Version 1 is not enabled
-  - CKV_AWS_20   # S3 Bucket has an access logging bucket configured
-  - CKV_AWS_23   # Ensure S3 bucket has a lifecycle policy
-  - CKV_AWS_145  # Ensure that S3 buckets are encrypted with KMS by default
-  - CKV_AWS_18   # Ensure the S3 bucket has access logging bucket configured
-  - CKV_AWS_21   # Ensure S3 bucket has versioning enabled
-  - CKV_AWS_57   # S3 Bucket has an ACL defined which allows public WRITE access
-  - CKV_AWS_56   # S3 Bucket has an ACL defined which allows public READ access
 
 severity:
   - critical
@@ -35,3 +30,5 @@ check:
   - CKV_AWS_135  # Ensure that EC2 is EBS optimized
   - CKV_AWS_24   # Ensure no security groups allow ingress from 0.0.0.0:0 to port 22
   - CKV_AWS_25   # Ensure no security groups allow ingress from 0.0.0.0:0 to port 3389
+  - CKV_AWS_20   # S3 Bucket has an ACL defined which allows public access
+  - CKV_AWS_23   # Ensure every security groups rule has a description

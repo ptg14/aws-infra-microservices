@@ -1,7 +1,7 @@
-# Sửa resource aws_security_group "web"
+# Security Group for Web Servers
 resource "aws_security_group" "web" {
   name_prefix = "${var.project}-${var.environment}-web-"
-  description = "Security group for web servers" # Thêm description
+  description = "Security group for web servers"
   vpc_id      = var.vpc_id
 
   # HTTP
@@ -10,7 +10,7 @@ resource "aws_security_group" "web" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Có thể giữ nguyên cho web public
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # HTTPS
@@ -19,7 +19,7 @@ resource "aws_security_group" "web" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Có thể giữ nguyên cho web public
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   # SSH - Hạn chế IP thay vì 0.0.0.0/0
@@ -70,10 +70,10 @@ resource "aws_security_group" "web" {
   }
 }
 
-# Sửa resource aws_security_group "app"
+# Security Group for App Servers
 resource "aws_security_group" "app" {
   name_prefix = "${var.project}-${var.environment}-app-"
-  description = "Security group for application servers" # Thêm description
+  description = "Security group for application servers"
   vpc_id      = var.vpc_id
 
   # Application port (8080)
@@ -133,15 +133,16 @@ resource "aws_security_group" "app" {
   }
 }
 
-# Sửa resource aws_instance "web"
+# Web Server Instances
 resource "aws_instance" "web" {
   count = var.ec2_instance_count
 
-  ami                    = var.ami_id
-  instance_type          = var.instance_type
-  key_name               = var.key_name != "" ? var.key_name : null
-  vpc_security_group_ids = [aws_security_group.web.id]
-  subnet_id              = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  key_name                    = var.key_name != "" ? var.key_name : null
+  vpc_security_group_ids      = [aws_security_group.web.id]
+  subnet_id                   = var.public_subnet_ids[count.index % length(var.public_subnet_ids)]
+  associate_public_ip_address = true # Đảm bảo có public IP
 
   # Thêm các cấu hình bảo mật
   monitoring    = true # Enable detailed monitoring
@@ -183,7 +184,7 @@ resource "aws_instance" "web" {
   }
 }
 
-# Sửa resource aws_instance "app" tương tự
+# Application Server Instances
 resource "aws_instance" "app" {
   count = var.ec2_instance_count
 

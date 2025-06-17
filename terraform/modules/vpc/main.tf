@@ -22,14 +22,14 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# Public Subnets - không auto-assign public IP
+# Public Subnets - Sửa lại để auto-assign public IP cho web servers
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
 
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = false # Sửa từ true thành false
+  map_public_ip_on_launch = true # Sửa từ false thành true để web servers có public IP
 
   tags = {
     Name        = "${var.project}-${var.environment}-public-subnet-${count.index + 1}"
@@ -61,13 +61,13 @@ resource "aws_eip" "nat" {
 
   domain = "vpc"
 
+  depends_on = [aws_internet_gateway.main]
+
   tags = {
-    Name        = "${var.project}-${var.environment}-nat-eip-${count.index + 1}"
+    Name        = "${var.project}-${var.environment}-eip-nat-${count.index + 1}"
     Project     = var.project
     Environment = var.environment
   }
-
-  depends_on = [aws_internet_gateway.main]
 }
 
 # NAT Gateways
