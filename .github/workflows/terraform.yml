@@ -73,57 +73,48 @@ jobs:
       id: validate
       run: terraform validate
 
-    - name: Create reports directory
-      run: |
-        mkdir -p reports
-        ls -la
-
     - name: Install Checkov
       run: |
         echo "Installing Checkov..."
         pip install checkov
         checkov --version
 
-    - name: Run Checkov scan
+    - name: Run Checkov
       id: checkov
-      uses: bridgecrewio/checkov-action@master
-      with:
-        directory: terraform
-        framework: terraform
-        output_format: cli,json
-        output_file_path: reports
-        download_external_modules: true
-        quiet: true
-        soft_fail: true
-        skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23,CKV_AWS_260,CKV_AWS_88,CKV_AWS_130,CKV2_AWS_11,CKV2_AWS_41
-      continue-on-error: true
-
-    - name: Copy Checkov results from container
       run: |
-        # List all containers to find the checkov container
-        docker ps -a
+        echo "Creating reports directory..."
+        mkdir -p reports
 
-        # Copy files if container still exists
-        CONTAINER_ID=$(docker ps -a --format "table {{.Names}}\t{{.ID}}" | grep checkov | awk '{print $2}' | head -1)
-        if [ ! -z "$CONTAINER_ID" ]; then
-          echo "Found container: $CONTAINER_ID"
-          docker cp $CONTAINER_ID:/github/workspace/reports/ ./ || echo "Failed to copy from container"
+        echo "Running Checkov scan..."
+        checkov -d terraform \
+          --skip-check CKV_AWS_79,CKV_AWS_20,CKV_AWS_23,CKV_AWS_260,CKV_AWS_88,CKV_AWS_130,CKV2_AWS_11,CKV2_AWS_41 \
+          --soft-fail \
+          --output cli \
+          --output json \
+          --output-file-path reports \
+          --download-external-modules true \
+          --framework terraform \
+          --quiet
+
+        echo "Scan completed. Checking results..."
+        ls -la reports/
+
+        # Kiểm tra và hiển thị nội dung file results
+        if [ -f "reports/results_json.json" ]; then
+          echo "✅ JSON results file found and has $(wc -l < reports/results_json.json) lines"
+          echo "File size: $(du -h reports/results_json.json)"
+        else
+          echo "❌ JSON results file not found!"
+          echo "Available files in reports:"
+          find reports -type f -name "*" 2>/dev/null || echo "No files in reports directory"
         fi
 
-        # Alternative: Check if files already exist in workspace
-        echo "Checking workspace for reports..."
-        find . -name "*results*" -type f || echo "No result files found"
-        ls -la reports/ || echo "Reports directory not found"
-
-
-    - name: Debug Checkov outputs
-      run: |
-        echo "Checking reports directory contents..."
-        ls -la reports/ || echo "Reports directory not found"
-        echo "Current directory contents:"
-        ls -la
-        echo "Looking for JSON files:"
-        find . -name "*.json" -type f 2>/dev/null || echo "No JSON files found"
+        if [ -f "reports/results_cli.txt" ]; then
+          echo "✅ CLI results file found"
+        else
+          echo "❌ CLI results file not found!"
+        fi
+      continue-on-error: true
 
     - name: Parse Checkov JSON Results
       id: parse_checkov
