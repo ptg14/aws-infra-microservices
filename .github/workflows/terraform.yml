@@ -118,15 +118,29 @@ jobs:
 
     - name: Parse Checkov JSON Results
       id: parse_checkov
+      working-directory: .  # Override working directory to access reports from root
       run: |
+        echo "Current directory: $(pwd)"
+        echo "Looking for results files..."
+        find . -name "results_*.json" -o -name "results_*.txt" || echo "No result files found"
+
+        # Tìm file JSON results ở multiple locations
+        JSON_FILE=""
         if [ -f "reports/results_json.json" ]; then
+          JSON_FILE="reports/results_json.json"
+        elif [ -f "terraform/reports/results_json.json" ]; then
+          JSON_FILE="terraform/reports/results_json.json"
+        fi
+
+        if [ ! -z "$JSON_FILE" ]; then
+          echo "Found JSON file at: $JSON_FILE"
           echo "JSON_EXISTS=true" >> $GITHUB_ENV
-          echo "JSON_PATH=reports/results_json.json" >> $GITHUB_ENV
+          echo "JSON_PATH=$JSON_FILE" >> $GITHUB_ENV
 
           # Parse JSON results
-          PASSED_CHECKS=$(jq -r '.summary.passed' reports/results_json.json 2>/dev/null || echo "0")
-          FAILED_CHECKS=$(jq -r '.summary.failed' reports/results_json.json 2>/dev/null || echo "0")
-          SKIPPED_CHECKS=$(jq -r '.summary.skipped' reports/results_json.json 2>/dev/null || echo "0")
+          PASSED_CHECKS=$(jq -r '.summary.passed' "$JSON_FILE" 2>/dev/null || echo "0")
+          FAILED_CHECKS=$(jq -r '.summary.failed' "$JSON_FILE" 2>/dev/null || echo "0")
+          SKIPPED_CHECKS=$(jq -r '.summary.skipped' "$JSON_FILE" 2>/dev/null || echo "0")
 
           echo "PASSED_CHECKS=$PASSED_CHECKS" >> $GITHUB_ENV
           echo "FAILED_CHECKS=$FAILED_CHECKS" >> $GITHUB_ENV
@@ -185,8 +199,7 @@ jobs:
       with:
         name: checkov-results
         path: |
-          reports/results_json.json
-          reports/results_cli.txt
+          reports/
         retention-days: 30
 
     - name: Terraform Plan
