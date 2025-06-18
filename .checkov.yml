@@ -11,7 +11,7 @@ output:
 
 output-file-path: reports
 
-quiet: false
+quiet: true
 
 compact: true
 
