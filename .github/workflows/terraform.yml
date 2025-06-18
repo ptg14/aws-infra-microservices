@@ -101,7 +101,7 @@ jobs:
 
         # Kiểm tra và hiển thị nội dung file results
         if [ -f "reports/results_json.json" ]; then
-          echo "✅ JSON results file found and has $(wc -l < reports/results_json.json) lines"
+          echo "✅ JSON results file found"
           echo "File size: $(du -h reports/results_json.json)"
         else
           echo "❌ JSON results file not found!"
@@ -157,6 +157,7 @@ jobs:
 
     - name: Checkov Summary
       if: always()
+      working-directory: .  # Override working directory to access files from root
       run: |
         echo "## Checkov Security Scan Results" >> $GITHUB_STEP_SUMMARY
 
@@ -169,11 +170,19 @@ jobs:
           echo "- ⏭️ **Skipped**: ${{ env.SKIPPED_CHECKS }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
+          # Tìm file JSON ở đúng location
+          JSON_FILE=""
+          if [ -f "terraform/reports/results_json.json" ]; then
+            JSON_FILE="terraform/reports/results_json.json"
+          elif [ -f "reports/results_json.json" ]; then
+            JSON_FILE="reports/results_json.json"
+          fi
+
           # Show failed checks details if any
-          if [ "${{ env.FAILED_CHECKS }}" != "0" ]; then
+          if [ "${{ env.FAILED_CHECKS }}" != "0" ] && [ ! -z "$JSON_FILE" ]; then
             echo "### Failed Checks Details" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            jq -r '.results.failed_checks[] | "- " + .check_id + ": " + .check_name + " (" + .file_path + ")"' reports/results_json.json | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse failed checks" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            jq -r '.results.failed_checks[]? | "- " + .check_id + ": " + .check_name + " (" + .file_path + ")"' "$JSON_FILE" | head -10 >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Could not parse failed checks" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
             if [ "${{ env.FAILED_CHECKS }}" -gt "10" ]; then
@@ -185,11 +194,18 @@ jobs:
         fi
 
         # Show CLI output summary if available
-        if [ -f "reports/results_cli.txt" ]; then
+        CLI_FILE=""
+        if [ -f "terraform/reports/results_cli.txt" ]; then
+          CLI_FILE="terraform/reports/results_cli.txt"
+        elif [ -f "reports/results_cli.txt" ]; then
+          CLI_FILE="reports/results_cli.txt"
+        fi
+
+        if [ ! -z "$CLI_FILE" ]; then
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### CLI Output Summary" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          tail -15 reports/results_cli.txt >> $GITHUB_STEP_SUMMARY || echo "Could not read CLI results file" >> $GITHUB_STEP_SUMMARY
+          tail -15 "$CLI_FILE" >> $GITHUB_STEP_SUMMARY || echo "Could not read CLI results file" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
         fi
 
@@ -198,8 +214,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: checkov-results
-        path: |
-          reports/
+        path: terraform/reports/
         retention-days: 30
 
     - name: Terraform Plan
