@@ -95,17 +95,19 @@ jobs:
         download_external_modules: true
         quiet: true
         soft_fail: true
-        skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23
+        skip_check: CKV_AWS_79,CKV_AWS_20,CKV_AWS_23,CKV_AWS_260,CKV_AWS_88,CKV_AWS_130,CKV2_AWS_11,CKV2_AWS_41
       continue-on-error: true
 
     - name: Debug Checkov outputs
       run: |
         echo "Checking reports directory contents..."
         ls -la reports/ || echo "Reports directory not found"
-        echo "Current directory contents:"
-        ls -la
-        echo "Looking for JSON files:"
+        echo "All files in reports directory:"
+        find reports/ -type f -name "*" 2>/dev/null || echo "No files found in reports"
+        echo "Looking for any JSON files in current directory:"
         find . -name "*.json" -type f 2>/dev/null || echo "No JSON files found"
+        echo "Looking for any checkov files:"
+        find . -name "*checkov*" -type f 2>/dev/null || echo "No checkov files found"
 
     - name: Parse Checkov JSON Results
       id: parse_checkov

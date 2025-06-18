@@ -114,6 +114,7 @@ curl -f http://localhost:3000 || echo "Demo app đang khởi động..."
 ```bash
 ./jenkins/scripts/monitor-system.sh
 ```
+
 ## Các bước sau hướng dẫn cấu hình thêm (optional)
 
 ### Bước 3: Cấu hình Jenkins

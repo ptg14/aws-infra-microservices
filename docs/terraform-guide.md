@@ -110,7 +110,6 @@ sudo yum install -y git
 
 # Cài đặt TFLint
 curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-sudo mv tflint /usr/local/bin/
 
 # Xác minh các cài đặt
 jq --version
